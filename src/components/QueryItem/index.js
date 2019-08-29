@@ -6,19 +6,50 @@ class QueryItem extends Component{
     constructor(props){
         super(props);
         this.state = {
-            platformName: "Choose One.."
+            platformName: "Choose One..",
+            loginChecked: false,
+            text: ""
         };
     }
 
     selectMedia = (e) => {
         const platformName = e;
-        this.setState(() => {
-            return {platformName: platformName}
+        this.setState({
+            ...this.state,
+            platformName: platformName
+        });
+    }
+
+    onLoginChecked = (e) => {
+        const setData = this.props.setData;
+        const checked = e.target.checked;
+        const queryInfo = {
+            loginChecked: checked,
+            text: this.state.text
+        };
+        setData(queryInfo);
+        this.setState({
+            ...this.state,
+            loginChecked: checked
+        });
+    }
+
+    onTextChanged = (e) => {
+        const setData = this.props.setData;
+        const text = e.target.value;
+        const queryInfo = {
+            loginChecked: this.state.loginChecked,
+            text: text
+        };
+        setData(queryInfo);
+        this.setState({
+            ...this.state,
+            text: text
         });
     }
 
     render = () => {
-        const {width} = this.props;
+        const {width, itemkey} = this.props;
         const {platformName} = this.state;
         return <div className="queryitem-container" style={{width: width}}>
             <InputGroup className="mb-3">
@@ -34,8 +65,18 @@ class QueryItem extends Component{
                 <Dropdown.Item eventKey="Foursquare">Foursquare</Dropdown.Item>
                 <Dropdown.Item eventKey="Flickr">Flickr</Dropdown.Item>
                 </DropdownButton>
-                <FormControl aria-describedby="basic-addon1" />
+                <FormControl aria-describedby="basic-addon1" onChange={this.onTextChanged} />
             </InputGroup>
+            <p>
+                <input
+                    name="login"
+                    id={`login${itemkey}`}
+                    type="checkbox"
+                    checked={this.state.isGoing}
+                    onChange={this.onLoginChecked} />
+                
+                <label className="queryitem-label" htmlFor={`login${itemkey}`}>Login your account </label>
+            </p>
         </div>
     }
 }

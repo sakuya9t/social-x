@@ -5,3 +5,7 @@
 .queryitem-dropdown-fixwidth{
     width: 100px;
 }
+
+.queryitem-label{
+    padding-left: 10px;
+}
