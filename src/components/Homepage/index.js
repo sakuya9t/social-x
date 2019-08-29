@@ -42,6 +42,10 @@ class Homepage extends Component{
 
     }
 
+    submit = () => {
+        console.log("submitted");
+    }
+
     render(){
         return <>
             <div className="home-container">
@@ -54,7 +58,7 @@ class Homepage extends Component{
                     <p>Account 2:</p>
                     <QueryItem width="100%" itemkey="2" setData={this.setData.bind(this,2)}/>
                     <p className="home-text-center">
-                        <Button className="home-submit-btn">Calculate</Button>
+                        <Button className="home-submit-btn" onClick={this.submit}>Calculate</Button>
                     </p>
                 </div>
             </div>
