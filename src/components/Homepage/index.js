@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import './index.css';
 import QueryItem from '../QueryItem';
+import LoginPage from '../LoginPage';
 import { Button } from 'react-bootstrap';
 import HeaderImg from '../../resources/header.png';
 
@@ -9,15 +10,17 @@ class Homepage extends Component{
         super(props);
         this.state = {
             account1 : {
-                platformName: "",
+                platformName: "Select Platform..",
                 loginChecked: false,
                 text: ""
             },
             account2 : {
-                platformName: "",
+                platformName: "Select Platform..",
                 loginChecked: false,
                 text: ""
-            }
+            },
+            displayLoginWindow: false,
+            displayLoginPlatforms: []
         }
     }
 
@@ -43,8 +46,27 @@ class Homepage extends Component{
     }
 
     submit = () => {
-        console.log("submitted");
+        const {account1, account2} = this.state;
+        let platforms = [];
+        if([account1.platformName, account2.platformName].includes("Select Platform..")){
+            alert("Please select a social media platform.");
+            return;
+        }
+        if(account1.loginChecked){
+            platforms.push(account1.platformName);
+        }
+        if(account2.loginChecked){
+            platforms.push(account2.platformName);
+        }
+
+        this.setState({
+            ...this.state,
+            displayLoginPlatforms: platforms,
+            displayLoginWindow: platforms.length > 0
+        });
     }
+
+    LoginPage = () => this.state.displayLoginWindow ? <LoginPage /> : null;
 
     render(){
         return <>
@@ -62,6 +84,7 @@ class Homepage extends Component{
                     </p>
                 </div>
             </div>
+            {this.LoginPage.apply()}
         </>;
     }
 }
