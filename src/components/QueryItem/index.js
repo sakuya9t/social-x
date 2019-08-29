@@ -11,9 +11,14 @@ class QueryItem extends Component{
             text: ""
         };
     }
-
+    
     selectMedia = (e) => {
+        const setData = this.props.setData;
         const platformName = e;
+        setData({
+            ...this.state,
+            platformName: platformName
+        });
         this.setState({
             ...this.state,
             platformName: platformName
@@ -23,11 +28,10 @@ class QueryItem extends Component{
     onLoginChecked = (e) => {
         const setData = this.props.setData;
         const checked = e.target.checked;
-        const queryInfo = {
-            loginChecked: checked,
-            text: this.state.text
-        };
-        setData(queryInfo);
+        setData({
+            ...this.state,
+            loginChecked: checked
+        });
         this.setState({
             ...this.state,
             loginChecked: checked
@@ -37,11 +41,10 @@ class QueryItem extends Component{
     onTextChanged = (e) => {
         const setData = this.props.setData;
         const text = e.target.value;
-        const queryInfo = {
-            loginChecked: this.state.loginChecked,
+        setData({
+            ...this.state,
             text: text
-        };
-        setData(queryInfo);
+        });
         this.setState({
             ...this.state,
             text: text

@@ -22,7 +22,9 @@ const About = () => <h2>About</h2>;
 
 const Header= () => 
     <Navbar bg="light" expand="lg">
-      <Navbar.Brand href="/">Account similarity</Navbar.Brand>
+      <Navbar.Brand href="/">
+        <span>Social X</span>
+      </Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="mr-auto">
