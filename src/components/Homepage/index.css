@@ -1,7 +1,6 @@
 .home-container{
-    width:500px;
+    width: 560px;
     margin: 50px auto;
-    text-align: center;
 }
 
 .home-submit-btn{
@@ -11,4 +10,12 @@
 
 .home-content-container{
     margin-top:50px;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 5%;
+    box-shadow: 5px 5px #eee;
+}
+
+.home-text-center{
+    text-align: center;
 }

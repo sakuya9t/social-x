@@ -6,7 +6,7 @@ class QueryItem extends Component{
     constructor(props){
         super(props);
         this.state = {
-            platformName: "Choose One..",
+            platformName: "Select Platform..",
             loginChecked: false,
             text: ""
         };
