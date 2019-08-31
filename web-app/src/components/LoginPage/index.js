@@ -3,8 +3,12 @@ import {uniq} from 'underscore';
 import { Form, Button } from 'react-bootstrap';
 import './index.css';
 import CloseImg from '../../resources/close.png';
+import RSA from '../../utils/RSA';
 
 class LoginPage extends Component{
+
+    rsa_module = new RSA();
+
     closeButtonClicked = () => {
         const {hideLogin} = this.props;
         hideLogin();
@@ -37,6 +41,7 @@ class LoginPage extends Component{
         const form = e.target;
         const username = form.username.value;
         const password = form.password.value;
+        console.log(this.rsa_module.encrypt(password));
         console.log(`${username}: ${password}`);
         e.preventDefault();
     }
