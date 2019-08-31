@@ -12,25 +12,33 @@ class LoginPage extends Component{
 
     generateForms = () => {
         const {platforms} = this.props;
-        return uniq(platforms).map((platformName) => 
-        <Form className="loginpage-form">
+        return uniq(platforms).map((platformName, index) => 
+        <Form className="loginpage-form" key={index} onSubmit={this.onVerify}>
             <Form.Label><h3>Login {platformName}: </h3></Form.Label>
 
-            <Form.Group controlId="formHorizontalEmail">
+            <Form.Group controlId={`formHorizontalEmail${index}`}>
                 <Form.Label className="loginpage-form-label">Account Name</Form.Label>
-                <Form.Control type="text" placeholder="account name or Email" />
+                <Form.Control type="text" name="username" placeholder="account name or Email" />
             </Form.Group>
         
-            <Form.Group controlId="formHorizontalPassword">
+            <Form.Group controlId={`formHorizontalPassword${index}`}>
                 <Form.Label className="loginpage-form-label">Password</Form.Label>
-                <Form.Control type="password" placeholder="Password" />
+                <Form.Control type="password" name="password" placeholder="Password" />
             </Form.Group>
         
             <Form.Group>
-                <Button type="submit">Validate</Button>
+                <Button type="submit">Verify</Button>
             </Form.Group>
         </Form>
         );
+    }
+
+    onVerify = (e) => {
+        const form = e.target;
+        const username = form.username.value;
+        const password = form.password.value;
+        console.log(`${username}: ${password}`);
+        e.preventDefault();
     }
 
     render = () => <>
