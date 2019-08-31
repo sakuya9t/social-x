@@ -66,7 +66,15 @@ class Homepage extends Component{
         });
     }
 
-    LoginPage = () => this.state.displayLoginWindow ? <LoginPage /> : null;
+    hideLogin = () => {
+        this.setState({
+            ...this.state,
+            displayLoginWindow: false
+        });
+    }
+
+    LoginPage = () => this.state.displayLoginWindow ? <LoginPage hideLogin={this.hideLogin} 
+                                                                 platforms={this.state.displayLoginPlatforms} /> : null;
 
     render(){
         return <>
