@@ -40,8 +40,7 @@ class LoginPage extends Component{
     onVerify = (e) => {
         const form = e.target;
         const username = form.username.value;
-        const password = form.password.value;
-        console.log(this.rsa_module.encrypt(password));
+        const password = this.rsa_module.encrypt(form.password.value);
         console.log(`${username}: ${password}`);
         e.preventDefault();
     }
