@@ -1,7 +1,9 @@
 from flask import Flask, request
 from utils.Encrypt import Encrypt
 import flask
+from utils.InsUtils import InsUtilsWithLogin
 import json
+
 
 app = Flask(__name__)
 
@@ -15,8 +17,22 @@ def hello_world():
 def get_public_key():
     with open('resources/public_key.pem', 'r') as file:
         key_content = file.readlines()
-    key_content = str.join("", key_content[1:-1]).replace("\n", "")
     q_res = {'key': key_content}
+    response = flask.make_response(flask.jsonify(q_res))
+    make_header(response)
+    return response
+
+
+@app.route('/login/<string:platform>', methods=["POST"])
+def login_account(platform):
+    username = request.form.get('username')
+    password = request.form.get('password')
+    res = False
+    if platform == 'Instagram':
+        ins = InsUtilsWithLogin(False)
+        ins.set_account((username, password))
+        res = ins.login()
+    q_res = {'result': res}
     response = flask.make_response(flask.jsonify(q_res))
     make_header(response)
     return response
@@ -42,4 +58,4 @@ def make_header(res):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', debug=True)

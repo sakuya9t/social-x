@@ -9,8 +9,8 @@ class Encrypt:
         self.key = RSA.importKey(key_content)
 
     def encrypt(self, body):
-        decryptor = PKCS1_OAEP.new(self.key)
-        return decryptor.encrypt(body)
+        encryptor = PKCS1_OAEP.new(self.key)
+        return encryptor.encrypt(body)
 
     def decrypt(self, body):
         decryptor = PKCS1_OAEP.new(self.key)
