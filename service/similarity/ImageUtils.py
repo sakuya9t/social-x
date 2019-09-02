@@ -7,10 +7,11 @@ import requests
 from io import BytesIO
 from sklearn.metrics.pairwise import cosine_similarity
 from similarity.img_to_vec import Img2Vec
+from utils.Config import Config
 
 
 class MSFaceService:
-    subscription_key = "70fa1e3147b14bf5af726186bc7bbcc2"
+    subscription_key = Config('config.json').get('microsoft')['subscription_key']
     headers = {'Ocp-Apim-Subscription-Key': subscription_key}
 
     def detect_face(self, image_url):
@@ -18,7 +19,8 @@ class MSFaceService:
         params = {
             'returnFaceId': 'true',
             'returnFaceLandmarks': 'false',
-            'returnFaceAttributes': 'age,gender,headPose,smile,facialHair,glasses,emotion,hair,makeup,occlusion,accessories,blur,exposure,noise',
+            'returnFaceAttributes': 'age,gender,headPose,smile,facialHair,glasses,emotion,hair,makeup,occlusion,'
+                                    'accessories,blur,exposure,noise',
         }
         response = requests.post(api_url, params=params, headers=self.headers, json={"url": image_url})
         return response.json()
@@ -36,8 +38,9 @@ class MSFaceService:
 
 
 class GoogleVisionUtils:
-    def __init__(self):      
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/data/dev/bright-benefit-250309-5fa89d250130.json"
+    def __init__(self):
+        keyfile = Config('config.json').get('google')['keyfile_path']
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keyfile
 
     def detect_labels(self, uri):
         """Detects labels in the file located in Google Cloud Storage or on the
@@ -75,3 +78,8 @@ def webimage_similarity(url1, url2):
     vec2 = img2vec.get_vec(img2)
     res['resnet18'] = cosine_similarity(vec1.reshape(1, -1), vec2.reshape(1, -1))[0][0]
     return res
+
+
+if __name__ == '__main__':
+    service = GoogleVisionUtils()
+    print(service.detect_labels('https://pbs.twimg.com/media/EDc7zqhU8AAnyVN?format=jpg&name=medium'))

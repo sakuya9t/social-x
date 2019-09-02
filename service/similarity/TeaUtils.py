@@ -59,7 +59,7 @@ class TeaUtils:
     def __del__(self):
         self.browser.close()
 
-        
+
 def query_writing_style(text):
     tea_metrics = TeaUtils().getTextMetrics(text)
     readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
