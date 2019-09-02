@@ -10,7 +10,6 @@ function App() {
         <Header />
 
         <Route exact path="/" component={Home} />
-        <Route path="/source" component={Source} />
         <Route path="/about" component={About} />
       </div>
     </Router>
@@ -20,8 +19,6 @@ function App() {
 const Home = () => <Homepage />;
 
 const About = () => <h2>About</h2>;
-
-const Source = () => <h2>SourceCode</h2>;
 
 const Header= () => 
     <Navbar bg="light" expand="lg">
@@ -34,7 +31,7 @@ const Header= () =>
           <Nav.Link href="/">Home</Nav.Link>
         </Nav>
         <Nav>
-        <Nav.Link href="/source/">SourceCode</Nav.Link>
+        <Nav.Link href="https://github.com/sakuya9t/social-x">SourceCode</Nav.Link>
           <Nav.Link href="/about/">About</Nav.Link>
         </Nav>
       </Navbar.Collapse>
