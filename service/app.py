@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import CORS
 from utils.Encrypt import Encrypt
 import flask
 from utils.InsUtils import InsUtilsWithLogin
@@ -6,7 +7,7 @@ import json
 
 
 app = Flask(__name__)
-
+CORS(app, resources=r'/*')
 
 @app.route('/')
 def hello_world():
@@ -25,8 +26,9 @@ def get_public_key():
 
 @app.route('/login/<string:platform>', methods=["POST"])
 def login_account(platform):
-    username = request.form.get('username')
-    password = request.form.get('password')
+    data = json.loads(request.get_data())
+    username = data['username']
+    password = data['password']
     res = False
     if platform == 'Instagram':
         ins = InsUtilsWithLogin(False)

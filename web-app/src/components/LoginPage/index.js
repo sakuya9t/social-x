@@ -42,7 +42,15 @@ class LoginPage extends Component{
         const username = form.username.value;
         //const password = this.rsa_module.encrypt(form.password.value);
         const password = form.password.value;
-        console.log(`${username}: ${password}`);
+        const data = {'username': username, 'password': password}
+        fetch('http://localhost:5000/login/Instagram', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers:{
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.json())
+        .then(resp => console.log(resp));
         e.preventDefault();
     }
 
