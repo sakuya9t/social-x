@@ -1,11 +1,12 @@
-import requests
 import json
 import os
-from google.cloud import vision
-from PIL import Image
-import requests
 from io import BytesIO
+
+import requests
+from PIL import Image
+from google.cloud import vision
 from sklearn.metrics.pairwise import cosine_similarity
+
 from similarity.img_to_vec import Img2Vec
 from utils.Config import Config
 
