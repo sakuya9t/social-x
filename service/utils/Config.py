@@ -6,7 +6,11 @@ class Config:
         with open(file_path, 'r') as json_data_file:
             self.data = json.load(json_data_file)
 
-    def get(self, attribute):
-        if attribute not in self.data.keys():
-            return None
-        return self.data[attribute]
+    def get(self, attributes):
+        att = attributes.split("/")
+        curr = self.data
+        for attribute in att:
+            if attribute not in curr.keys():
+                return None
+            curr = curr[attribute]
+        return curr
