@@ -1,11 +1,7 @@
 import selenium
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import time
-import sys
 
 import selenium
-from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 import sys
@@ -133,23 +129,28 @@ class TwiUtilsNoLogin:
 
 class TwiUtilsWithLogin:
 
-    def __init__(self):
+    def __init__(self, displayed):
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--disable-gpu')
+        if not displayed:
+            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--disable-gpu')
         self.browser = selenium.webdriver.Chrome('./chromedriver', options=chrome_options)
         self.browser.set_window_size(1920, 1080)
-        self.login()
+
+    def set_account(self, account):
+        self.account = account
         
     def login(self):
-        self.browser.get("https://www.twitter.com/login")
+        self.browser.get("https://twitter.com/login")
         time.sleep(3)
         inputs = self.browser.find_elements_by_tag_name("fieldset")[0].find_elements_by_tag_name("input")
-        inputs[0].send_keys("wangzijian09@gmail.com")
-        inputs[1].send_keys("1qaz2WSX3edc")
+        username, password = self.account
+        inputs[0].send_keys(username)
+        inputs[1].send_keys(password)
         submit_button = self.browser.find_element_by_css_selector("button.submit")
         submit_button.click()
         time.sleep(3)
+        return "login" not in self.browser.current_url
         
     def isSuspended(self, username):
         url = "https://www.twitter.com/" + username

@@ -155,7 +155,7 @@ class InsUtilsWithLogin:
         btn = self.browser.find_elements_by_tag_name("button")[1]
         btn.click()
         time.sleep(3)
-        return "your password was incorrect" not in self.browser.find_elements_by_tag_name("body")[0].text
+        return self.browser.current_url != 'https://www.instagram.com/accounts/login/'
 
     def parse_profile(self, username):
         self.browser.get("https://www.instagram.com/" + username + "/")
