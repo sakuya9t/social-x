@@ -2,9 +2,10 @@ from flask import Flask, request
 from flask_cors import CORS
 import flask
 
+from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
-import json
+import json, os
 
 from utils.TwiUtils import TwiUtilsWithLogin
 
@@ -42,6 +43,11 @@ def login_account():
         return make_response({'result': False})
     instance.set_account((username, password))
     res = instance.login()
+    if res:
+        config_path = os.getcwd() + '/config.json'
+        database = Couch(config_path, 'credential')
+        database.insert(data)
+
     return make_response({'result': res})
 
 

@@ -1,5 +1,5 @@
 from similarity import TextUtils
-from utils.Config import Config
+from similarity.Config import Config
 
 
 class SimCalculator:
