@@ -67,6 +67,12 @@ class Couch:
         if document.exists():
             return document['_id']
 
+    def distinct_insert(self, doc):
+        query_res = self.query(doc)
+        if len(query_res) == 0:
+            return self.insert(doc)
+        return query_res[0]['_id']
+
     # update operation of the database;
     # usage: database.update(field, old_value, new_value)
     # fields: field -> str; value -> str; new_value -> str
