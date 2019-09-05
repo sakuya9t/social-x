@@ -42,7 +42,25 @@ class Homepage extends Component{
     }
 
     sendRequest = () => {
+        const {account1, account2} = this.state;
+        const data = {
+            account1: {
+                platform: account1.platformName,
+                account: account1.text
+            }, 
+            account2: {
+                platform: account2.platformName,
+                account: account2.text
+            }};
 
+        fetch('http://localhost:5000/query', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers:{
+                'Content-Type': 'application/json',
+            }
+        }).then(res => res.text())
+        .then(res => console.log(res));
     }
 
     submit = () => {
@@ -57,6 +75,10 @@ class Homepage extends Component{
         }
         if(account2.loginChecked){
             platforms.push(account2.platformName);
+        }
+
+        if(!account1.loginChecked && !account2.loginChecked){
+            this.sendRequest();
         }
 
         this.setState({
@@ -74,7 +96,8 @@ class Homepage extends Component{
     }
 
     LoginPage = () => this.state.displayLoginWindow ? <LoginPage hideLogin={this.hideLogin} 
-                                                                 platforms={this.state.displayLoginPlatforms} /> : null;
+                                                                 platforms={this.state.displayLoginPlatforms} 
+                                                                 sendRequest = {this.sendRequest} /> : null;
 
     render(){
         return <>
