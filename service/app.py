@@ -1,26 +1,27 @@
 from flask import Flask, request
 from flask_cors import CORS
-from utils.Encrypt import Encrypt
 import flask
+
+from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
 import json
 
 from utils.TwiUtils import TwiUtilsWithLogin
 
 app = Flask(__name__)
-CORS(app, resources=r'/*')
+CORS(app)
+
 
 @app.route('/')
 def hello_world():
     return 'Hello World!'
 
 
-@app.route('/publickey')
+@app.route('/key')
 def get_public_key():
     with open('resources/public_key.pem', 'r') as file:
-        key_content = file.readlines()
-    q_res = {'key': key_content}
-    return make_response(q_res)
+        data = file.read()
+        return {'data': data}
 
 
 @app.route('/login', methods=["POST"])
@@ -28,7 +29,7 @@ def login_account():
     data = json.loads(request.get_data())
     platform = data['platform']
     username = data['username']
-    password = data['password']
+    password = decrypt(data['password'])
     res = False
     instance = None
     if len(username) == 0 and len(password) == 0:
@@ -44,15 +45,20 @@ def login_account():
     return make_response({'result': res})
 
 
+@app.route('/query', methods=["POST"])
+def query():
+    data = json.loads(request.get_data())
+    print(data)
+    return "ok"
+
+
 @app.route('/decrypt', methods=["POST"])
-def decrypt_test():
-    data = request.form.get('password')
-    decoder = Encrypt()
-    plain_text = decoder.decrypt(decoder.decodebase64(data))
-    print(plain_text)
-    plain_text = plain_text.decode('utf-8')
-    q_res = {'text': plain_text}
-    return make_response(q_res)
+def decrypt_api():
+    data = request.get_data()
+    data = json.loads(data)
+    message = data['message']
+    return decrypt(message)
+
 
 def make_response(q_res):
     response = flask.make_response(flask.jsonify(q_res))

@@ -4,6 +4,7 @@ import { Form, Button } from 'react-bootstrap';
 import './index.css';
 import CloseImg from '../../resources/close.png';
 import RSA from '../../utils/RSA';
+import LoginValidation from './LoginValidation';
 
 class LoginPage extends Component{
     constructor(props){
@@ -12,7 +13,7 @@ class LoginPage extends Component{
         const {platforms} = this.props;
         this.state = {
             platforms: uniq(platforms),
-            validated: uniq(platforms).map((platformName) => ({[platformName]: false})).reduce((curr, x) => Object.assign(curr, x), {})
+            validated: uniq(platforms).map((platformName) => ({[platformName]: null})).reduce((curr, x) => Object.assign(curr, x), {})
         };
     }
 
@@ -45,16 +46,19 @@ class LoginPage extends Component{
             <Form.Group>
                 <Button type="submit">Verify</Button>
             </Form.Group>
+
+            <LoginValidation valid={this.state.validated[platformName]} />
         </Form>
         );
     }
 
     onVerify = (e) => {
+        e.preventDefault();
         const form = e.target;
         const platform = form.platform.value;
         const username = form.username.value;
-        //const password = this.rsa_module.encrypt(form.password.value);
-        const password = form.password.value;
+        const password = this.rsa_module.encrypt(form.password.value);
+        //const password = form.password.value;
         const data = {'platform': platform, 'username': username, 'password': password}
         fetch('http://localhost:5000/login', {
             method: 'POST',
@@ -72,7 +76,6 @@ class LoginPage extends Component{
                 validated: validated
             });
         });
-        e.preventDefault();
     }
 
     render = () => <>
