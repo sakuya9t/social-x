@@ -9,12 +9,12 @@ import re, json
 
 
 class InsUtils:
-    def __init__(self, displayed):
+    def __init__(self, displayed, driver):
         self.chrome_options = Options()
         if not displayed:
             self.chrome_options.add_argument('--headless')
             self.chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome('./chromedriver', options=self.chrome_options)
+        self.browser = selenium.webdriver.Chrome(driver, options=self.chrome_options)
         self.browser.set_window_size(1920, 1080)
         self.browser.get("https://www.instagram.com/")
 
@@ -110,16 +110,13 @@ class InsUtilsNoLogin(InsUtils):
 
 
 class InsUtilsWithLogin(InsUtils):
-    def set_account(self, account):
-        self.account = account
-
-    def login(self):
+    def login(self, account):
         loginurl = 'https://www.instagram.com/accounts/login/'
         self.browser.get(loginurl)
         time.sleep(3)
         # sign in the username and pass
         inputs = self.browser.find_elements_by_tag_name("input")
-        username, password = self.account
+        username, password = account
         inputs[0].send_keys(username)
         inputs[1].send_keys(password)
 
@@ -216,13 +213,3 @@ class InsUtilsWithLogin(InsUtils):
         print("Parse posts url succeed, " + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(posts_urls)
         return {"profile": profile, "following": following, "posts_content": posts_content}
-
-
-if __name__ == "__main__":
-    u = InsUtils()
-    u.login()
-    # user_info = u.parse_profile("kuyosakuya")
-    # print(user_info)
-    page_content = u.parse_posts_content(["https://www.instagram.com/p/BKj_8N2A96m/"])
-    print(page_content)
-

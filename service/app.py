@@ -39,7 +39,7 @@ def login_account():
     if len(username) == 0 and len(password) == 0:
         return make_response({'result': res})
     if platform == 'Instagram':
-        instance = InsUtilsWithLogin(displayed=False)
+        instance = InsUtilsWithLogin(displayed=False, driver='./chromedriver')
     elif platform == 'Twitter':
         instance = TwiUtilsWithLogin(displayed=False)
     if instance is None:
@@ -76,7 +76,7 @@ def decrypt_api():
 def retrieve(account):
     query = generate_query(account)
     result = execute_query(query)
-    return {}
+    return result
 
 
 def make_response(q_res):

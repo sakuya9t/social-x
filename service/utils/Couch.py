@@ -99,11 +99,3 @@ class Couch:
             doc = Document(self.db, id)
             doc['_rev'] = rev
             doc.delete()
-
-
-if __name__ == "__main__":
-    conn = Couch("../config.json", "asdfasdf")
-    conn.select_db("test")
-    test_doc = {"abc": "def"}
-    print(conn.insert(test_doc))
-    print(conn.query({"abc": "def"}))

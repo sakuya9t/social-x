@@ -91,7 +91,7 @@ class Homepage extends Component{
             alert("Please select a social media platform.");
             return;
         }
-        if(account1.text === "" && account2.text === ""){
+        if(!account1.loginChecked && !account2.loginChecked && account1.text === "" && account2.text === ""){
             alert("Please input an account name.");
             return;
         }

@@ -12,8 +12,9 @@ from similarity.Config import Config
 
 
 class MSFaceService:
-    subscription_key = Config('../config.json').get('microsoft/subscription_key')
-    headers = {'Ocp-Apim-Subscription-Key': subscription_key}
+    def __init__(self, config_path):
+        subscription_key = Config(config_path).get('microsoft/subscription_key')
+        self.headers = {'Ocp-Apim-Subscription-Key': subscription_key}
 
     def detect_face(self, image_url):
         api_url = 'https://australiaeast.api.cognitive.microsoft.com/face/v1.0/detect'
@@ -39,8 +40,8 @@ class MSFaceService:
 
 
 class GoogleVisionUtils:
-    def __init__(self):
-        keyfile = Config('../config.json').get('google/keyfile_path')
+    def __init__(self, config_path):
+        keyfile = Config(config_path).get('google/keyfile_path')
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keyfile
 
     def detect_labels(self, uri):
@@ -82,5 +83,5 @@ def webimage_similarity(url1, url2):
 
 
 if __name__ == '__main__':
-    service = GoogleVisionUtils()
+    service = GoogleVisionUtils('../config.json')
     print(service.detect_labels('https://pbs.twimg.com/media/EDc7zqhU8AAnyVN?format=jpg&name=medium'))
