@@ -67,9 +67,13 @@ class Homepage extends Component{
         // }).then(res => res.text())
         // .then(res => console.log(res));
 
+        // test data for ui
         let resdata = {
+            account1: data.account1,
+            account2: data.account2,
             similarity: 1.0
         };
+        // test data for ui end
 
         this.setState({
             ...this.state,
@@ -85,6 +89,10 @@ class Homepage extends Component{
         let platforms = [];
         if([account1.platformName, account2.platformName].includes("Select Platform..")){
             alert("Please select a social media platform.");
+            return;
+        }
+        if(account1.text === "" && account2.text === ""){
+            alert("Please input an account name.");
             return;
         }
         if(account1.loginChecked){
