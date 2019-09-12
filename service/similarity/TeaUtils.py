@@ -3,7 +3,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import numpy as np
-from sklearn import preprocessing
 import readability
 import random
 import string
@@ -57,9 +56,9 @@ class TeaUtils:
             except Exception as e:
                 time.sleep(5)
                 continue
-                
+
     def __del__(self):
-        self.browser.close()
+        self.browser.quit()
 
 
 def query_writing_style(text, driver):
@@ -74,8 +73,20 @@ def randomString(stringLength=10):
     return ''.join(random.choice(letters) for i in range(stringLength))
 
 def writing_style_similarity(vector1, vector2):
-    tea1 = np.asarray(vector1['tea'].append(vector1['readbility'] / 10), dtype=np.float)
-    tea2 = np.asarray(vector2['tea'].append(vector2['readbility'] / 10), dtype=np.float)
-    vA = preprocessing.normalize(tea1, norm='l1')
-    vB = preprocessing.normalize(tea2, norm='l1')
+    value1 = list(vector1['tea'].values())[:-1]
+    value1.append(vector1['tea']['Flesch Kincaid Grade Level'] / 10)
+    value2 = list(vector2['tea'].values())[:-1]
+    value2.append(vector2['tea']['Flesch Kincaid Grade Level'] / 10)
+    tea1 = np.asarray(value1, dtype=np.float)
+    tea1 = np.true_divide(tea1, np.linalg.norm(tea1))
+    tea2 = np.asarray(value2, dtype=np.float)
+    tea2 = np.true_divide(tea2, np.linalg.norm(tea2))
+    read1 = np.asarray(list(vector1['readbility'].values()), dtype=np.float)
+    read1 = np.true_divide(read1, np.linalg.norm(read1))
+    read2 = np.asarray(list(vector2['readbility'].values()), dtype=np.float)
+    read2 = np.true_divide(read2, np.linalg.norm(read2))
+    return [cosine_similarity(tea1, tea2), cosine_similarity(read1, read2)]
+
+
+def cosine_similarity(vA, vB):
     return np.dot(vA, vB) / (np.sqrt(np.dot(vA, vA)) * np.sqrt(np.dot(vB, vB)))
