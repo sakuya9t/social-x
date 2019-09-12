@@ -2,15 +2,18 @@ from flask import Flask, request
 from flask_cors import CORS
 import flask
 
+from similarity.SimCalculator import SimCalculator
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
 import json, os
 
+from utils.QueryGenerator import generate_query, execute_query
 from utils.TwiUtils import TwiUtilsWithLogin
 
 app = Flask(__name__)
 CORS(app)
+algoModule = SimCalculator()
 
 
 @app.route('/')
@@ -54,8 +57,12 @@ def login_account():
 @app.route('/query', methods=["POST"])
 def query():
     data = json.loads(request.get_data())
-    print(data)
-    return "ok"
+    account1 = data['account1']
+    account2 = data['account2']
+    info1 = retrieve(account1)
+    info2 = retrieve(account2)
+    res = algoModule.calc(info1, info2)
+    return make_response({'result': res})
 
 
 @app.route('/decrypt', methods=["POST"])
@@ -64,6 +71,12 @@ def decrypt_api():
     data = json.loads(data)
     message = data['message']
     return decrypt(message)
+
+
+def retrieve(account):
+    query = generate_query(account)
+    result = execute_query(query)
+    return {}
 
 
 def make_response(q_res):
