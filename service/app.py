@@ -13,7 +13,8 @@ from utils.TwiUtils import TwiUtilsWithLogin
 
 app = Flask(__name__)
 CORS(app)
-algoModule = SimCalculator()
+chrome_driver = './chromedriver'
+algoModule = SimCalculator(driver=chrome_driver, config='./algomodule.config')
 
 
 @app.route('/')
@@ -39,7 +40,7 @@ def login_account():
     if len(username) == 0 and len(password) == 0:
         return make_response({'result': res})
     if platform == 'Instagram':
-        instance = InsUtilsWithLogin(displayed=False, driver='./chromedriver')
+        instance = InsUtilsWithLogin(displayed=False, driver=chrome_driver)
     elif platform == 'Twitter':
         instance = TwiUtilsWithLogin(displayed=False)
     if instance is None:
