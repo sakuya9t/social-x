@@ -13,7 +13,7 @@ def decrypt(message):
     key = RSA.importKey(file_get_contents("resources/private_key.pem"))
     cipher = PKCS1_OAEP.new(key, hashAlgo=SHA256)
     decrypted_message = cipher.decrypt(b64decode(message))
-    return str(decrypted_message)
+    return decrypted_message.decode('ASCII', "ignore")
 
 
 def generate_key():

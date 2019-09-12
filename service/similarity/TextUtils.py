@@ -7,6 +7,36 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+import tensorflow_hub as hub
+import numpy as np
+
+
+class TensorSimilarity:
+    def __init__(self):
+        self.initialize()
+
+    def initialize(self):
+        module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
+        embed = hub.Module(module_url)
+        self.session = tf.Session()
+        self.session.run([tf.global_variables_initializer(), tf.tables_initializer()])
+        self.similarity_input_placeholder = tf.placeholder(tf.string, shape=(None))
+        self.similarity_message_encodings = embed(self.similarity_input_placeholder)
+
+    def similarity(self, msg1, msg2):
+        messages = (msg1, msg2)
+        message_embeddings = self.session.run(
+            self.similarity_message_encodings, feed_dict={self.similarity_input_placeholder: messages})
+        corr = np.inner(message_embeddings, message_embeddings)
+        return corr.item((0, 1))
+
+    def close(self):
+        self.session.close()
+
 
 def initialize():
     import nltk
@@ -34,10 +64,14 @@ def tokenize(text):
     return tokens
 
 
-def similarity(str1, str2):
+def similarity(str1, str2, type):
     tokens_1 = tokenize(str1)
     tokens_2 = tokenize(str2)
-    return [textdistance.jaccard(tokens_1, tokens_2), textdistance.sorensen_dice(tokens_1, tokens_2)]
+    if type == 'jaccard':
+        return textdistance.jaccard(tokens_1, tokens_2)
+    elif type == 'sorensen':
+        return textdistance.sorensen_dice(tokens_1, tokens_2)
+    return 0
 
 
 def distinct_read(filename):
@@ -48,3 +82,12 @@ def distinct_read(filename):
             s.add(line)
             line = file.readline()
     return s
+
+
+if __name__ == '__main__':
+    str1 = 'TensorFlow Hub is a library for the publication, discovery, and consumption of reusable parts of machine learning models.'
+    str2 = 'In the process of using a module from an URL there are many errors that can show up due to the network stack. Often this is a problem specific to the machine running the code and not an issue with the library.'
+    print(similarity(str1, str2, 'jaccard'))
+    print(similarity(str1, str2, 'sorensen'))
+    tensorsim = TensorSimilarity()
+    print(tensorsim.similarity(str1, str2))
