@@ -74,6 +74,15 @@ def similarity(str1, str2, type):
     return 0
 
 
+def topics_in_posts(posts):
+    topics = []
+    for post in posts:
+        if '#' in post:
+            matches = re.findall(r'#\w+', post)
+            topics += matches
+    return [x.replace('#', '') for x in topics]
+
+
 def distinct_read(filename):
     s = set()
     with open(filename, "r") as file:
