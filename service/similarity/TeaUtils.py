@@ -62,6 +62,7 @@ class TeaUtils:
 
 
 def query_writing_style(text, driver):
+    text = ''.join(c for c in text if c <= '\uFFFF')
     tea_metrics = TeaUtils(driver).getTextMetrics(text)
     readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
     return {'tea': tea_metrics, 'readbility': readbility_metrics}

@@ -62,7 +62,7 @@ def query():
     account2 = data['account2']
     info1 = retrieve(account1)
     info2 = retrieve(account2)
-    res = algoModule.calc(info1, info2)
+    res = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']))
     return make_response({'result': res})
 
 

@@ -10,8 +10,10 @@ class SimCalculator:
         self.semantic_sim = TensorSimilarity()
         self.driver = driver
 
-    def calc(self, info1, info2):
+    def calc(self, info1, info2, enable_networking):
         vector = self.vectorize(info1, info2)
+        if enable_networking:
+            vector['network'] = self.network_similarity(info1, info2)
         return 1
 
     def vectorize(self, info1, info2):
@@ -32,3 +34,6 @@ class SimCalculator:
         all_posts_text = [" ".join(posts1), " ".join(posts2)]
         writing_style = [query_writing_style(x, self.driver) for x in all_posts_text]
         return writing_style_similarity(writing_style[0], writing_style[1])
+
+    def network_similarity(self, info1, info2):
+        return 0.0
