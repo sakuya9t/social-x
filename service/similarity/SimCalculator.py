@@ -2,13 +2,13 @@ from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
 from similarity.TextUtils import TensorSimilarity
+from constant import CONFIG_PATH
 
 
 class SimCalculator:
-    def __init__(self, driver, config):
-        self.config = Config(config)
+    def __init__(self):
+        self.config = Config(CONFIG_PATH)
         self.semantic_sim = TensorSimilarity()
-        self.driver = driver
 
     def calc(self, info1, info2, enable_networking):
         vector = self.vectorize(info1, info2)
@@ -32,7 +32,7 @@ class SimCalculator:
 
     def writing_style_similarity(self, posts1, posts2):
         all_posts_text = [" ".join(posts1), " ".join(posts2)]
-        writing_style = [query_writing_style(x, self.driver) for x in all_posts_text]
+        writing_style = [query_writing_style(x) for x in all_posts_text]
         return writing_style_similarity(writing_style[0], writing_style[1])
 
     def network_similarity(self, info1, info2):

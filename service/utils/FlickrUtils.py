@@ -7,15 +7,16 @@ from selenium.common.exceptions import NoSuchElementException
 from bs4 import BeautifulSoup
 import requests
 from multiprocessing.dummy import Pool as ThreadPool
+from constant import DRIVER_PATH
 
 
 class FlickrUtils:
-    def __init__(self, showbrowser, driver):
+    def __init__(self, showbrowser):
         chrome_options = Options()
         if not showbrowser:
             chrome_options.add_argument('--headless')
             chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome(driver, options=chrome_options)
+        self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
         self.browser.set_window_size(1920, 1080)
     
     def set_user(self, username):

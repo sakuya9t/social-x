@@ -5,7 +5,7 @@ from utils.FlickrUtils import FlickrUtils
 
 class FlickrUtilsTest(unittest.TestCase):
     def test_parse_should_no_exception(self):
-        parser = FlickrUtils(showbrowser=False, driver='../../chromedriver')
+        parser = FlickrUtils(showbrowser=False)
         info = parser.parse('sakuranyochan')
         parser.close()
         self.assertTrue('profile' in info.keys())

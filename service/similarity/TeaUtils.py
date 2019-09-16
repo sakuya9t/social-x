@@ -1,3 +1,6 @@
+from multiprocessing.pool import ThreadPool
+from constant import DRIVER_PATH
+
 import selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -10,11 +13,11 @@ import time
 
 
 class TeaUtils:
-    def __init__(self, driver):
+    def __init__(self):
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome(driver, options=chrome_options)
+        self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
         self.browser.set_window_size(1920, 1080)
         self.login()
         
@@ -61,17 +64,25 @@ class TeaUtils:
         self.browser.quit()
 
 
-def query_writing_style(text, driver):
+def query_writing_style(text):
     text = ''.join(c for c in text if c <= '\uFFFF')
-    tea_metrics = TeaUtils(driver).getTextMetrics(text)
+    text = ' '.join(text.split(' ')[:300])
+    tea_metrics = TeaUtils().getTextMetrics(text)
     readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
     return {'tea': tea_metrics, 'readbility': readbility_metrics}
+
+
+def multi_thread_query_writing_style(texts, n_threads):
+    pool = ThreadPool(n_threads)
+    results = pool.map(query_writing_style, texts)
+    return results
                 
     
 def randomString(stringLength=10):
     """Generate a random string of fixed length """
     letters = string.ascii_lowercase
     return ''.join(random.choice(letters) for i in range(stringLength))
+
 
 def writing_style_similarity(vector1, vector2):
     value1 = list(vector1['tea'].values())[:-1]

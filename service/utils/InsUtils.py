@@ -6,15 +6,16 @@ from bs4 import BeautifulSoup
 from multiprocessing.dummy import Pool as ThreadPool
 import requests
 import re, json
+from constant import DRIVER_PATH
 
 
 class InsUtils:
-    def __init__(self, displayed, driver):
+    def __init__(self, displayed):
         self.chrome_options = Options()
         if not displayed:
             self.chrome_options.add_argument('--headless')
             self.chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome(driver, options=self.chrome_options)
+        self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=self.chrome_options)
         self.browser.set_window_size(1920, 1080)
         self.browser.get("https://www.instagram.com/")
 

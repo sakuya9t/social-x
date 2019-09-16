@@ -6,15 +6,15 @@ from similarity.SimCalculator import SimCalculator
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
-import json, os
+import json
 
 from utils.QueryGenerator import generate_query, execute_query
 from utils.TwiUtils import TwiUtilsWithLogin
+from constant import CONFIG_PATH
 
 app = Flask(__name__)
 CORS(app)
-chrome_driver = './chromedriver'
-algoModule = SimCalculator(driver=chrome_driver, config='./algomodule.config')
+algoModule = SimCalculator()
 
 
 @app.route('/')
@@ -40,7 +40,7 @@ def login_account():
     if len(username) == 0 and len(password) == 0:
         return make_response({'result': res})
     if platform == 'Instagram':
-        instance = InsUtilsWithLogin(displayed=False, driver=chrome_driver)
+        instance = InsUtilsWithLogin(displayed=False)
     elif platform == 'Twitter':
         instance = TwiUtilsWithLogin(displayed=False)
     if instance is None:
@@ -48,8 +48,7 @@ def login_account():
     instance.set_account((username, password))
     res = instance.login()
     if res:
-        config_path = os.getcwd() + '/config.json'
-        database = Couch(config_path, 'credential')
+        database = Couch(CONFIG_PATH, 'credential')
         database.insert(data)
 
     return make_response({'result': res})

@@ -9,11 +9,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from similarity.img_to_vec import Img2Vec
 from similarity.Config import Config
+from constant import CONFIG_PATH
 
 
 class MSFaceService:
-    def __init__(self, config_path):
-        subscription_key = Config(config_path).get('microsoft/subscription_key')
+    def __init__(self):
+        subscription_key = Config(CONFIG_PATH).get('microsoft/subscription_key')
         self.headers = {'Ocp-Apim-Subscription-Key': subscription_key}
 
     def detect_face(self, image_url):
@@ -40,8 +41,8 @@ class MSFaceService:
 
 
 class GoogleVisionUtils:
-    def __init__(self, config_path):
-        keyfile = Config(config_path).get('google/keyfile_path')
+    def __init__(self):
+        keyfile = Config(CONFIG_PATH).get('google/keyfile_path')
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keyfile
 
     def detect_labels(self, uri):
@@ -83,5 +84,5 @@ def webimage_similarity(url1, url2):
 
 
 if __name__ == '__main__':
-    service = GoogleVisionUtils('../config.json')
+    service = GoogleVisionUtils()
     print(service.detect_labels('https://pbs.twimg.com/media/EDc7zqhU8AAnyVN?format=jpg&name=medium'))

@@ -4,6 +4,7 @@ from cloudant.document import Document
 from cloudant.database import CouchDatabase
 
 from similarity.Config import Config
+from constant import CONFIG_PATH
 
 
 class Couch:
@@ -13,8 +14,8 @@ class Couch:
 
     # usage: database = Couch(db_name)
     # fields: db_name -> str
-    def __init__(self, config_path, db_name):
-        server_config = Config(config_path).get('couchdb')
+    def __init__(self, db_name):
+        server_config = Config(CONFIG_PATH).get('couchdb')
         self.client = CouchDB(server_config['username'], server_config['password'], url=server_config['server_addr'],
                               connect=True, auto_renew=True)
         self.select_db(db_name)
