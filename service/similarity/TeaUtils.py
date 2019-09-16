@@ -1,5 +1,5 @@
 from multiprocessing.pool import ThreadPool
-from constant import DRIVER_PATH
+from constant import DRIVER_PATH, ALGOCONFIG_PATH
 
 import selenium
 from selenium import webdriver
@@ -10,6 +10,8 @@ import readability
 import random
 import string
 import time
+
+from similarity.Config import Config
 
 
 class TeaUtils:
@@ -64,12 +66,18 @@ class TeaUtils:
         self.browser.quit()
 
 
+tea_enabled = bool(Config(ALGOCONFIG_PATH).get('tea-enabled'))
+
+
 def query_writing_style(text):
     text = ''.join(c for c in text if c <= '\uFFFF')
-    text = ' '.join(text.split(' ')[:300])
-    tea_metrics = TeaUtils().getTextMetrics(text)
     readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
-    return {'tea': tea_metrics, 'readbility': readbility_metrics}
+    if tea_enabled:
+        text = ' '.join(text.split(' ')[:300])
+        tea_metrics = TeaUtils().getTextMetrics(text)
+        return {'tea': tea_metrics, 'readbility': readbility_metrics}
+    else:
+        return {'readbility': readbility_metrics}
 
 
 def multi_thread_query_writing_style(texts, n_threads):
@@ -85,6 +93,12 @@ def randomString(stringLength=10):
 
 
 def writing_style_similarity(vector1, vector2):
+    read1 = np.asarray(list(vector1['readbility'].values()), dtype=np.float)
+    read1 = np.true_divide(read1, np.linalg.norm(read1))
+    read2 = np.asarray(list(vector2['readbility'].values()), dtype=np.float)
+    read2 = np.true_divide(read2, np.linalg.norm(read2))
+    if not tea_enabled:
+        return [cosine_similarity(read1, read2)]
     value1 = list(vector1['tea'].values())[:-1]
     value1.append(vector1['tea']['Flesch Kincaid Grade Level'] / 10)
     value2 = list(vector2['tea'].values())[:-1]
@@ -93,10 +107,6 @@ def writing_style_similarity(vector1, vector2):
     tea1 = np.true_divide(tea1, np.linalg.norm(tea1))
     tea2 = np.asarray(value2, dtype=np.float)
     tea2 = np.true_divide(tea2, np.linalg.norm(tea2))
-    read1 = np.asarray(list(vector1['readbility'].values()), dtype=np.float)
-    read1 = np.true_divide(read1, np.linalg.norm(read1))
-    read2 = np.asarray(list(vector2['readbility'].values()), dtype=np.float)
-    read2 = np.true_divide(read2, np.linalg.norm(read2))
     return [cosine_similarity(tea1, tea2), cosine_similarity(read1, read2)]
 
 

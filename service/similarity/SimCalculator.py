@@ -24,7 +24,7 @@ class SimCalculator:
         posts1 = info1['posts_content'] if 'posts_content' in info1.keys() else []
         posts2 = info2['posts_content'] if 'posts_content' in info2.keys() else []
 
-        result['writingStyle'] = writing_style_similarity(posts1, posts2)
+        result['writingStyle'] = self.writing_style_similarity(posts1, posts2)
         return result
 
     def profile_img_similarity(self, url1, url2):
