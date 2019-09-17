@@ -1,0 +1,19 @@
+{
+    "microsoft":{
+        "subscription_key": "70fa1e3147b14bf5af726186bc7bbcc2"
+    },
+    "google":{
+        "keyfile_path": "/data/dev/bright-benefit-250309-5fa89d250130.json"
+    },
+    "couchdb":{
+        "server_addr": "http://115.146.84.119:5984/",
+        "username": "aassddff",
+        "password": "ffddssaa"
+    },
+    "instagram":{
+        "accounts": [
+            {"username": "wqegswegh898", "password": "asdgwe22DF"},
+            {"username": "hirariclinton49", "password": "ag33#teFD"}
+        ]
+    }
+}

@@ -6,10 +6,11 @@ from similarity.SimCalculator import SimCalculator
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
-import json, os
+import json
 
 from utils.QueryGenerator import generate_query, execute_query
 from utils.TwiUtils import TwiUtilsWithLogin
+from constant import CONFIG_PATH
 
 app = Flask(__name__)
 CORS(app)
@@ -47,8 +48,7 @@ def login_account():
     instance.set_account((username, password))
     res = instance.login()
     if res:
-        config_path = os.getcwd() + '/config.json'
-        database = Couch(config_path, 'credential')
+        database = Couch(CONFIG_PATH, 'credential')
         database.insert(data)
 
     return make_response({'result': res})
@@ -61,7 +61,7 @@ def query():
     account2 = data['account2']
     info1 = retrieve(account1)
     info2 = retrieve(account2)
-    res = algoModule.calc(info1, info2)
+    res = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']))
     return make_response({'result': res})
 
 
@@ -76,7 +76,7 @@ def decrypt_api():
 def retrieve(account):
     query = generate_query(account)
     result = execute_query(query)
-    return {}
+    return result
 
 
 def make_response(q_res):

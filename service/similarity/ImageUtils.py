@@ -9,11 +9,13 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from similarity.img_to_vec import Img2Vec
 from similarity.Config import Config
+from constant import CONFIG_PATH
 
 
 class MSFaceService:
-    subscription_key = Config('../config.json').get('microsoft/subscription_key')
-    headers = {'Ocp-Apim-Subscription-Key': subscription_key}
+    def __init__(self):
+        subscription_key = Config(CONFIG_PATH).get('microsoft/subscription_key')
+        self.headers = {'Ocp-Apim-Subscription-Key': subscription_key}
 
     def detect_face(self, image_url):
         api_url = 'https://australiaeast.api.cognitive.microsoft.com/face/v1.0/detect'
@@ -40,7 +42,7 @@ class MSFaceService:
 
 class GoogleVisionUtils:
     def __init__(self):
-        keyfile = Config('../config.json').get('google/keyfile_path')
+        keyfile = Config(CONFIG_PATH).get('google/keyfile_path')
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keyfile
 
     def detect_labels(self, uri):

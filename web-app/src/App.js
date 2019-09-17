@@ -2,13 +2,13 @@ import React from "react";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import { Navbar, Nav } from 'react-bootstrap';
 import Homepage from "./components/Homepage";
+import LogoImg from './resources/logo.png';
 
 function App() {
   return (
     <Router>
       <div>
         <Header />
-
         <Route exact path="/" component={Home} />
         <Route path="/about" component={About} />
       </div>
@@ -23,6 +23,13 @@ const About = () => <h2>About</h2>;
 const Header= () => 
     <Navbar bg="light" expand="lg">
       <Navbar.Brand href="/">
+        <img
+          src={LogoImg}
+          width="32"
+          height="32"
+          className="d-inline-block align-top"
+          alt="React Bootstrap logo"
+        />
         <span>Social X</span>
       </Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
