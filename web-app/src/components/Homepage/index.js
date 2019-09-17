@@ -4,6 +4,7 @@ import QueryItem from '../QueryItem';
 import LoginPage from '../LoginPage';
 import ResultPage from '../ResultPage';
 import { Button } from 'react-bootstrap';
+import ReactCanvasNest from 'react-canvas-nest';
 import {animateScroll} from 'react-scroll';
 import HeaderImg from '../../resources/header.png';
 
@@ -129,6 +130,7 @@ class Homepage extends Component{
     render(){
         const {waitingResult, showResult, result} = this.state;
         return <>
+            <ReactCanvasNest style={{position:'fixed', opacity:0.2}}/>
             <div className="home-container">
                 <p className="home-text-center">
                     <img src={HeaderImg} alt="header" width="400" height="250"/>
