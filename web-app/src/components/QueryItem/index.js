@@ -65,7 +65,7 @@ class QueryItem extends Component{
                 >
                 <Dropdown.Item eventKey="Instagram">Instagram</Dropdown.Item>
                 <Dropdown.Item eventKey="Twitter">Twitter</Dropdown.Item>
-                <Dropdown.Item eventKey="Foursquare">Foursquare</Dropdown.Item>
+                <Dropdown.Item eventKey="Pinterest">Pinterest</Dropdown.Item>
                 <Dropdown.Item eventKey="Flickr">Flickr</Dropdown.Item>
                 </DropdownButton>
                 <FormControl aria-describedby="basic-addon1" onChange={this.onTextChanged} />
