@@ -5,60 +5,21 @@ import time
 from bs4 import BeautifulSoup
 from multiprocessing.dummy import Pool as ThreadPool
 import requests
-import re
+import re, json
+from constant import DRIVER_PATH
+
 
 class InsUtils:
-    def __init__(self, login):
-        if login:
-            self.instagram = InsUtilsWithLogin(False)
-        else:
-            self.instagram = InsUtilsNoLogin()
-            
-    def parse(self, username):
-        return self.instagram.parse(username)
-    
-    def parse_profile(self, username):
-        return self.instagram.parse_profile(username)
-    
-
-class InsUtilsNoLogin:
-    
-    def __init__(self):
+    def __init__(self, displayed):
         self.chrome_options = Options()
-        self.chrome_options.add_argument('--headless')
-        self.chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome('./chromedriver', options=self.chrome_options)
+        if not displayed:
+            self.chrome_options.add_argument('--headless')
+            self.chrome_options.add_argument('--disable-gpu')
+        self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=self.chrome_options)
         self.browser.set_window_size(1920, 1080)
+        self.browser.get("https://www.instagram.com/")
 
-    def parse_profile(self, username):
-        self.browser.get("https://www.instagram.com/" + username + "/")
-        time.sleep(3)
-        try:
-            is_404 = len(self.browser.find_elements_by_class_name("dialog-404")) != 0
-            if is_404:
-                print("User " + username + " not exist.")
-                return "INVALID"
-            screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
-            profile_img = self.parse_profile_img(username)
-            is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
-            is_empty_account = "No Posts Yet" in self.browser.find_elements_by_tag_name("body")[0].text
-            desc_div = self.browser.find_elements_by_tag_name("section")[1].find_elements_by_tag_name("div")[1]
-            desc_str = desc_div.get_attribute("innerText")
-            desc_str = desc_str.replace("\n", ";;")
-            if is_private:
-                print("User " + screen_name + " is a private account.")
-                return {"username": screen_name, "status": "PRIVATE", "description": desc_str, "image": profile_img}
-            if is_empty_account:
-                print("User " + screen_name + " is an empty account.")
-                return {"username": screen_name, "status": "EMPTY", "description": desc_str, "image": profile_img}
-            time.sleep(3)
-
-            return {"username": screen_name, "description": desc_str, "image": profile_img}
-        except Exception as ex:
-            print(str(ex))
-            return "INVALID"
-        
-    def parse_profile_img(self, username):
+    def parse_profile_img(self):
         ele = self.browser.find_elements_by_tag_name("header")[0].find_elements_by_tag_name("img")[0]
         return ele.get_attribute('src')
 
@@ -81,37 +42,59 @@ class InsUtilsNoLogin:
         a_hrefs = list(a_hrefs)
         return a_hrefs[:500]
 
-    def parse_posts_content(self, urls):
-        res = []
-        for url in urls:
-            try:
-                self.browser.get(url)
-                time.sleep(1)
-                user_name = self.browser.find_element_by_tag_name("h2")
-                if user_name is list:
-                    user_name = user_name[0]
-                user_name = user_name.text
-                texts = self.browser.find_elements_by_css_selector("[role=\"menuitem\"]")
-                texts = [x.text for x in texts]
-                res.append({"user": user_name, "text": texts})
-            except:
-                continue
-        return res
-    
-    def get_post_content(self,url):
+    def get_post_content(self, url):
         resp = requests.get(url)
         data = resp.text
-        soup = BeautifulSoup(data, features="html.parser")
+        soup = BeautifulSoup(data)
         text = soup.find_all("title")[0].get_text()
-        matches=re.findall(r'“(.+?)”',text)
+        matches = re.findall(r'“(.+?)”', text)
+        script_text = list(filter(lambda x: 'display_url' in x.get_text(), soup.find_all("script")))[0].get_text()
+        url_json = json.loads('{' + re.findall(r'\"display_url\":\"[^\"]*\"', script_text)[0] + '}')
+        image_url = re.sub('&.*', '', url_json['display_url'])
         if len(matches) == 0:
-            return ""
-        return matches[0]
+            post_text = ""
+        else:
+            post_text = matches[0]
+        return {"text": post_text, "image": image_url}
 
-    def multi_thread_parse(self,urls):
+    def multi_thread_parse(self, urls):
         pool = ThreadPool(10)
         results = pool.map(self.get_post_content, urls)
         return results
+
+    def close(self):
+        self.browser.stop_client()
+        self.browser.close()
+
+
+class InsUtilsNoLogin(InsUtils):
+    def parse_profile(self, username):
+        self.browser.get("https://www.instagram.com/" + username + "/")
+        time.sleep(3)
+        try:
+            is_404 = len(self.browser.find_elements_by_class_name("dialog-404")) != 0
+            if is_404:
+                print("User " + username + " not exist.")
+                return "INVALID"
+            screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
+            profile_img = self.parse_profile_img()
+            is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
+            is_empty_account = "No Posts Yet" in self.browser.find_elements_by_tag_name("body")[0].text
+            desc_div = self.browser.find_elements_by_tag_name("section")[1].find_elements_by_tag_name("div")[1]
+            desc_str = desc_div.get_attribute("innerText")
+            desc_str = desc_str.replace("\n", ";;")
+            if is_private:
+                print("User " + screen_name + " is a private account.")
+                return {"username": screen_name, "status": "PRIVATE", "description": desc_str, "image": profile_img}
+            if is_empty_account:
+                print("User " + screen_name + " is an empty account.")
+                return {"username": screen_name, "status": "EMPTY", "description": desc_str, "image": profile_img}
+            time.sleep(3)
+
+            return {"username": screen_name, "description": desc_str, "image": profile_img}
+        except Exception as ex:
+            print(str(ex))
+            return "INVALID"
 
     def parse(self, username):
         profile = self.parse_profile(username)
@@ -120,34 +103,21 @@ class InsUtilsNoLogin:
             return "INVALID"
         print("Parse profile succeed.")
         if "status" in profile.keys() and profile["status"] in ["PRIVATE", "EMPTY"]:
-            return profile
+            return {"profile": profile}
         posts_urls = self.parse_posts()
         print("Parse posts url succeed, " + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(posts_urls)
         return {"profile": profile, "posts_content": posts_content}
 
 
-class InsUtilsWithLogin:
-
-    def __init__(self, displayed):
-        self.chrome_options = Options()
-        if not displayed:
-            self.chrome_options.add_argument('--headless')
-            self.chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome('./chromedriver', options=self.chrome_options)
-        self.browser.set_window_size(1920, 1080)
-        self.browser.get("https://www.instagram.com/")
-
-    def set_account(self, account):
-        self.account = account
-
-    def login(self):
+class InsUtilsWithLogin(InsUtils):
+    def login(self, account):
         loginurl = 'https://www.instagram.com/accounts/login/'
         self.browser.get(loginurl)
         time.sleep(3)
         # sign in the username and pass
         inputs = self.browser.find_elements_by_tag_name("input")
-        username, password = self.account
+        username, password = account
         inputs[0].send_keys(username)
         inputs[1].send_keys(password)
 
@@ -166,7 +136,7 @@ class InsUtilsWithLogin:
                 print("User " + username + " not exist.")
                 return "INVALID"
             screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
-            profile_img = self.parse_profile_img(username)
+            profile_img = self.parse_profile_img()
             is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
             is_empty_account = "No Posts Yet" in self.browser.find_elements_by_tag_name("body")[0].text
             if is_private or is_empty_account:
@@ -193,10 +163,6 @@ class InsUtilsWithLogin:
         except Exception as ex:
             print(str(ex))
             return "INVALID"
-        
-    def parse_profile_img(self, username):
-        ele = self.browser.find_elements_by_tag_name("header")[0].find_elements_by_tag_name("img")[0]
-        return ele.get_attribute('src')
 
     def parse_network(self):
         sub_window_container = self.browser.find_element_by_css_selector("[role=\"dialog\"]") \
@@ -234,42 +200,6 @@ class InsUtilsWithLogin:
             i = int(s)
         return int(i)
 
-    def parse_posts(self):
-        a_hrefs = set()
-        y_offset = 0
-        while True:
-            self.browser.execute_script("window.scrollBy(0,300)")
-            y_pos = self.browser.execute_script("return window.pageYOffset")
-            if y_pos == y_offset:
-                break
-            y_offset = y_pos
-            mainpart = self.browser.find_elements_by_tag_name("article")[0] \
-                .find_elements_by_xpath("*")[0].find_elements_by_xpath("*")[0]
-            a_labels = mainpart.find_elements_by_tag_name("a")
-            for a_label in a_labels:
-                a_href = a_label.get_attribute("href")
-                a_hrefs.add(a_href)
-            time.sleep(0.1)
-        a_hrefs = list(a_hrefs)
-        return a_hrefs[:500]
-
-    def parse_posts_content(self, urls):
-        res = []
-        for url in urls:
-            try:
-                self.browser.get(url)
-                time.sleep(1)
-                user_name = self.browser.find_element_by_tag_name("h2")
-                if user_name is list:
-                    user_name = user_name[0]
-                user_name = user_name.text
-                texts = self.browser.find_elements_by_css_selector("[role=\"menuitem\"]")
-                texts = [x.text for x in texts]
-                res.append({"user": user_name, "text": texts})
-            except:
-                continue
-        return res
-
     def parse(self, username):
         profile = self.parse_profile(username)
         if profile == 'INVALID':
@@ -282,15 +212,5 @@ class InsUtilsWithLogin:
         print("Parse following succeed, " + str(len(following)) + " followings.")
         posts_urls = self.parse_posts()
         print("Parse posts url succeed, " + str(len(posts_urls)) + " posts.")
-        posts_content = self.parse_posts_content(posts_urls)
+        posts_content = self.multi_thread_parse(posts_urls)
         return {"profile": profile, "following": following, "posts_content": posts_content}
-
-
-if __name__ == "__main__":
-    u = InsUtils()
-    u.login()
-    # user_info = u.parse_profile("kuyosakuya")
-    # print(user_info)
-    page_content = u.parse_posts_content(["https://www.instagram.com/p/BKj_8N2A96m/"])
-    print(page_content)
-

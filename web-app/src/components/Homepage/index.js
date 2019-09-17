@@ -2,7 +2,10 @@ import React, {Component} from 'react';
 import './index.css';
 import QueryItem from '../QueryItem';
 import LoginPage from '../LoginPage';
+import ResultPage from '../ResultPage';
 import { Button } from 'react-bootstrap';
+import ReactCanvasNest from 'react-canvas-nest';
+import {animateScroll} from 'react-scroll';
 import HeaderImg from '../../resources/header.png';
 
 class Homepage extends Component{
@@ -20,7 +23,10 @@ class Homepage extends Component{
                 text: ""
             },
             displayLoginWindow: false,
-            displayLoginPlatforms: []
+            displayLoginPlatforms: [],
+            result: {},
+            waitingResult: false,
+            showResult: false
         }
     }
 
@@ -42,7 +48,41 @@ class Homepage extends Component{
     }
 
     sendRequest = () => {
+        const {account1, account2} = this.state;
+        const data = {
+            account1: {
+                platform: account1.platformName,
+                account: account1.text
+            }, 
+            account2: {
+                platform: account2.platformName,
+                account: account2.text
+            }};
 
+        // fetch('http://localhost:5000/query', {
+        //     method: 'POST',
+        //     body: JSON.stringify(data),
+        //     headers:{
+        //         'Content-Type': 'application/json',
+        //     }
+        // }).then(res => res.text())
+        // .then(res => console.log(res));
+
+        // test data for ui
+        let resdata = {
+            account1: data.account1,
+            account2: data.account2,
+            similarity: 1.0
+        };
+        // test data for ui end
+
+        this.setState({
+            ...this.state,
+            result: resdata,
+            showResult: true
+        });
+
+        animateScroll.scrollToBottom();
     }
 
     submit = () => {
@@ -52,6 +92,10 @@ class Homepage extends Component{
             alert("Please select a social media platform.");
             return;
         }
+        if(!account1.loginChecked && !account2.loginChecked && account1.text === "" && account2.text === ""){
+            alert("Please input an account name.");
+            return;
+        }
         if(account1.loginChecked){
             platforms.push(account1.platformName);
         }
@@ -59,11 +103,17 @@ class Homepage extends Component{
             platforms.push(account2.platformName);
         }
 
-        this.setState({
-            ...this.state,
-            displayLoginPlatforms: platforms,
-            displayLoginWindow: platforms.length > 0
-        });
+        if(!account1.loginChecked && !account2.loginChecked){
+            this.sendRequest();
+        }
+
+        else{
+            this.setState({
+                ...this.state,
+                displayLoginPlatforms: platforms,
+                displayLoginWindow: platforms.length > 0
+            });
+        }
     }
 
     hideLogin = () => {
@@ -74,10 +124,13 @@ class Homepage extends Component{
     }
 
     LoginPage = () => this.state.displayLoginWindow ? <LoginPage hideLogin={this.hideLogin} 
-                                                                 platforms={this.state.displayLoginPlatforms} /> : null;
+                                                                 platforms={this.state.displayLoginPlatforms} 
+                                                                 sendRequest = {this.sendRequest} /> : null;
 
     render(){
+        const {waitingResult, showResult, result} = this.state;
         return <>
+            <ReactCanvasNest style={{position:'fixed', opacity:0.2}}/>
             <div className="home-container">
                 <p className="home-text-center">
                     <img src={HeaderImg} alt="header" width="400" height="250"/>
@@ -91,6 +144,8 @@ class Homepage extends Component{
                         <Button className="home-submit-btn" onClick={this.submit}>Calculate</Button>
                     </p>
                 </div>
+
+                {showResult ? <ResultPage waiting={waitingResult} data={JSON.stringify(result)}/> : null}
             </div>
             {this.LoginPage.apply()}
         </>;
