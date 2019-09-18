@@ -62,7 +62,7 @@ class TeaUtils:
                 time.sleep(5)
                 continue
 
-    def __del__(self):
+    def close(self):
         self.browser.quit()
 
 
@@ -74,7 +74,9 @@ def query_writing_style(text):
     readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
     if tea_enabled:
         text = ' '.join(text.split(' ')[:300])
-        tea_metrics = TeaUtils().getTextMetrics(text)
+        tea = TeaUtils()
+        tea_metrics = tea.getTextMetrics(text)
+        tea.close()
         return {'tea': tea_metrics, 'readbility': readbility_metrics}
     else:
         return {'readbility': readbility_metrics}

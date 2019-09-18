@@ -97,7 +97,7 @@ def distinct_read(filename):
 def jaccard_counter_similarity(counter1, counter2):
     intersection = sum((counter1 & counter2).values())
     union = sum((counter1 | counter2).values())
-    return intersection / union
+    return 0 if union == 0 else intersection / union
 
 
 if __name__ == '__main__':
