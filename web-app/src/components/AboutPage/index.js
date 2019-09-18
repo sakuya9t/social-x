@@ -3,7 +3,7 @@ import ScoreDisplay from '../ScoreDisplay';
 
 class AboutPage extends Component{
     render = () => {
-        return <ScoreDisplay score={0.2} />
+        return <ScoreDisplay score={0.2} delay={3} />
     }
 }
 export default AboutPage;
