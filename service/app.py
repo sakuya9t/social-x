@@ -56,13 +56,34 @@ def login_account():
 
 @app.route('/query', methods=["POST"])
 def query():
+    """
+        Request format:
+            {'account1': {'platform':'xxx', 'account': 'aaa'}, 'account2': {'platform':'yyy', 'account': 'bbb'}}
+        Response format:
+            {'result': 0.123, 'doc_id': '5bea4d3efa3646879'}
+    """
     data = json.loads(request.get_data())
     account1 = data['account1']
     account2 = data['account2']
     info1 = retrieve(account1, mode=REALTIME_MODE)
     info2 = retrieve(account2, mode=REALTIME_MODE)
-    res = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']), mode=REALTIME_MODE)
-    return make_response({'result': res})
+    score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
+                            mode=REALTIME_MODE)
+    doc_id = Couch('scores').insert({'query': data, 'result': score})
+    return make_response({'result': score, 'doc_id': doc_id})
+
+
+@app.route('/feedback', methods=["POST"])
+def feedback():
+    """
+        Request format:
+            {'doc_id': '5bea4d3efa3646879', 'feedback': 0}
+        Response format:
+            {'result': 'ok'}
+    """
+    data = json.loads(request.get_data())
+    Couch('feedback').insert(data)
+    return make_response({'result': 'ok'})
 
 
 @app.route('/decrypt', methods=["POST"])
