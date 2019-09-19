@@ -18,7 +18,7 @@ class ScoreBar extends Component{
             () => {
                 this.setState({
                     ...this.state,
-                    currWidth: `${this.count / (delay) * score}%`
+                    currWidth: `${this.count / (delay) * 1.5 * score}%`
                 });
                 this.count++;
             }, 20

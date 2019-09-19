@@ -6,7 +6,6 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
-from collections import Counter
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -73,6 +72,16 @@ def similarity(str1, str2, type):
     elif type == 'sorensen':
         return textdistance.sorensen_dice(tokens_1, tokens_2)
     return 0
+
+
+def singleword_similarity(profile1, profile2):
+    keys = ['username', 'name', 'screen_name', 'full_name']
+    res = -1
+    for key1 in keys:
+        for key2 in keys:
+            if key1 in profile1.keys() and key2 in profile2.keys():
+                res = max(res, textdistance.levenshtein.normalized_similarity(profile1[key1], profile2[key2]))
+    return res
 
 
 def topics_in_posts(posts):
