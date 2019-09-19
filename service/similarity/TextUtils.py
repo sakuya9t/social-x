@@ -1,18 +1,21 @@
-import re
+import re, ast
 import string
-import textdistance
+import textdistance, requests
 from nltk.corpus import wordnet
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
+import tensorflow as tf
+import tensorflow_hub as hub
+import numpy as np
+import urllib.parse
+from similarity.Config import Config
+from constant import CONFIG_PATH
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-import tensorflow_hub as hub
-import numpy as np
 
 
 class TensorSimilarity:
@@ -107,6 +110,15 @@ def jaccard_counter_similarity(counter1, counter2):
     intersection = sum((counter1 & counter2).values())
     union = sum((counter1 | counter2).values())
     return 0 if union == 0 else intersection / union
+
+
+def uclassify_topics(text):
+    key = Config(CONFIG_PATH).get('uclassify/apikey')
+    text = urllib.parse.quote_plus(text)
+    url = 'https://api.uclassify.com/v1/uclassify/topics/classify?readkey={key}&text={text}'\
+        .format(key=key, text=text)
+    response = requests.get(url).text
+    return ast.literal_eval(response)
 
 
 if __name__ == '__main__':

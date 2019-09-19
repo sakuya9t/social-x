@@ -1,7 +1,7 @@
 import unittest
 from collections import Counter
 
-from similarity.TextUtils import jaccard_counter_similarity, singleword_similarity
+from similarity.TextUtils import jaccard_counter_similarity, singleword_similarity, uclassify_topics
 
 
 class TextUtilsTests(unittest.TestCase):
@@ -854,3 +854,8 @@ class TextUtilsTests(unittest.TestCase):
         self.assertTrue(0 <= singleword_similarity(self.pinterest_profile, self.twitter_profile) <= 1)
         self.assertTrue(0 <= singleword_similarity(self.pinterest_profile, self.instagram_profile) <= 1)
         self.assertTrue(0 <= singleword_similarity(self.twitter_profile, self.instagram_profile) <= 1)
+
+    def test_uclassify_topics(self):
+        text = "Hellö Wörld@Python/?23$%67asdfjkl;[]}{\\';gasdfhjkl"
+        result = uclassify_topics(text)
+        self.assertTrue(len(result.keys()) > 0)
