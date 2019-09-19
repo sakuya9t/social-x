@@ -7,10 +7,11 @@ from multiprocessing.dummy import Pool as ThreadPool
 import requests
 import re, json
 from constant import DRIVER_PATH
+from utils.AbstractParser import AbstractParser
 
 
-class InsUtils:
-    def __init__(self, displayed):
+class InsUtils(AbstractParser):
+    def __init__(self, displayed=False):
         self.chrome_options = Options()
         if not displayed:
             self.chrome_options.add_argument('--headless')

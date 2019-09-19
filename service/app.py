@@ -8,9 +8,9 @@ from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
 import json
 
-from utils.QueryGenerator import generate_query, execute_query
+from utils.QueryGenerator import retrieve
 from utils.TwiUtils import TwiUtilsWithLogin
-from constant import CONFIG_PATH
+from constant import REALTIME_MODE
 
 app = Flask(__name__)
 CORS(app)
@@ -48,7 +48,7 @@ def login_account():
     instance.set_account((username, password))
     res = instance.login()
     if res:
-        database = Couch(CONFIG_PATH, 'credential')
+        database = Couch('credential')
         database.insert(data)
 
     return make_response({'result': res})
@@ -61,7 +61,7 @@ def query():
     account2 = data['account2']
     info1 = retrieve(account1)
     info2 = retrieve(account2)
-    res = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']))
+    res = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']), mode=REALTIME_MODE)
     return make_response({'result': res})
 
 
@@ -71,12 +71,6 @@ def decrypt_api():
     data = json.loads(data)
     message = data['message']
     return decrypt(message)
-
-
-def retrieve(account):
-    query = generate_query(account)
-    result = execute_query(query)
-    return result
 
 
 def make_response(q_res):

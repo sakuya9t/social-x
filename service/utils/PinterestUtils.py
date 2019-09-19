@@ -3,6 +3,9 @@ import requests
 from multiprocessing.dummy import Pool as ThreadPool
 import json
 
+from utils.AbstractParser import AbstractParser
+
+
 def get_pin_annotation(pin):
     try:
         url = pin['url']
@@ -16,10 +19,12 @@ def get_pin_annotation(pin):
     except:
         return []
 
+
 def get_pin_annotation_parallel(pins):
     pool = ThreadPool(20)
     results = pool.map(get_pin_annotation, pins)
     return results
+
 
 def parse_pinterest(username):
     url = "https://www.pinterest.com/{}".format(username)
@@ -36,7 +41,7 @@ def parse_pinterest(username):
 
     pins = info['pins']
     pins = list(filter(lambda x: x['pin_join'] and x['pin_join']['annotations_with_links'], pins))
-    pin_list = [{'labels': list(x['pin_join']['annotations_with_links'].keys()), 
+    pin_list = [{'labels': list(x['pin_join']['annotations_with_links'].keys()),
                  'url': base_pin_url + x['id'],
                  'id': x['id'],
                  'image': x['images']['orig']['url']} for x in pins]
@@ -47,3 +52,8 @@ def parse_pinterest(username):
     boards = [(x['name'], x['pin_count']) for x in info['boards']]
     user_data = {'profile': info['profile'], 'posts_content': pin_list, 'boards': boards}
     return user_data
+
+
+class PinterestUtils(AbstractParser):
+    def parse(self, username):
+        return parse_pinterest(username)
