@@ -14,6 +14,7 @@ def import_directory_to_db(path, db_name):
     db = Couch(db_name)
     for filename in os.listdir(path):
         import_file_to_db(path + "/" +filename, db)
+    db.close()
 
 
 if __name__ == '__main__':

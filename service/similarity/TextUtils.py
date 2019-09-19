@@ -32,7 +32,7 @@ class TensorSimilarity:
         embed = hub.Module(module_url)
         self.session = tf.Session()
         self.session.run([tf.global_variables_initializer(), tf.tables_initializer()])
-        self.similarity_input_placeholder = tf.placeholder(tf.string, shape=(None))
+        self.similarity_input_placeholder = tf.placeholder(tf.string, shape=None)
         self.similarity_message_encodings = embed(self.similarity_input_placeholder)
 
     def similarity(self, msg1, msg2):

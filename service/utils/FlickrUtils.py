@@ -91,7 +91,7 @@ class FlickrUtils(AbstractParser):
 
     def parse_profile(self, username):
         self.set_user(username)
-        profile = {}
+        profile = {'username': username}
         resp = requests.get(self.base_url + self.links['about'])
         data = resp.text
         soup = BeautifulSoup(data)

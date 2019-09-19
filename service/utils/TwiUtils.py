@@ -6,6 +6,7 @@ import time
 
 from utils.AbstractParser import AbstractParser
 from constant import DRIVER_PATH
+from utils.InvalidAccountException import InvalidAccountException
 
 
 class TwiUtils(AbstractParser):
@@ -17,17 +18,11 @@ class TwiUtils(AbstractParser):
         self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
         self.browser.set_window_size(1920, 1080)
 
-    def isSuspended(self, username):
-        url = "https://www.twitter.com/" + username
-        self.browser.get(url)
-        time.sleep(3)
+    def isSuspended(self):
         page_text = self.browser.find_elements_by_tag_name("body")[0].text
         return "Account suspended" in page_text
 
-    def isProtected(self, username):
-        url = "https://www.twitter.com/" + username
-        self.browser.get(url)
-        time.sleep(3)
+    def isProtected(self):
         page_text = self.browser.find_elements_by_tag_name("body")[0].text
         return "This account's Tweets are protected." in page_text
 
@@ -45,10 +40,12 @@ class TwiUtils(AbstractParser):
 
     def parse_posts(self, username):
         print("Parsing tweets of user: " + username)
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
-        if "This account's Tweets are protected." in page_text:
+        if self.isProtected():
             print("Account {name} is protected.".format(name=username))
-            return []
+            return None
+        if self.isSuspended():
+            print("Account {name} is suspended.".format(name=username))
+            return None
         self.browser.get("https://www.twitter.com/" + username)
         time.sleep(3)
 
@@ -101,6 +98,8 @@ class TwiUtilsNoLogin(TwiUtils):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
         time.sleep(3)
+        if self.isSuspended() or self.isProtected():
+            raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile_card = self.browser.find_element_by_class_name("ProfileHeaderCard")
         name = profile_card.find_element_by_class_name("ProfileHeaderCard-name").text
         screen_name = profile_card.find_element_by_class_name("ProfileHeaderCard-screenname").text
@@ -112,8 +111,11 @@ class TwiUtilsNoLogin(TwiUtils):
                 "image": profile_img}
 
     def parse(self, username):
-        if self.isSuspended(username):
-            return {}
+        url = "https://www.twitter.com/" + username
+        self.browser.get(url)
+        time.sleep(3)
+        if self.isSuspended() or self.isProtected():
+            raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile = self.parse_profile(username)
         posts_content = self.parse_posts(username)
         return {"profile": profile, "posts_content": posts_content}

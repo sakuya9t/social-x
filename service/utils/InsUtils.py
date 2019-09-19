@@ -8,6 +8,7 @@ import requests
 import re, json
 from constant import DRIVER_PATH
 from utils.AbstractParser import AbstractParser
+from utils.InvalidAccountException import InvalidAccountException
 
 
 class InsUtils(AbstractParser):
@@ -75,8 +76,7 @@ class InsUtilsNoLogin(InsUtils):
         try:
             is_404 = len(self.browser.find_elements_by_class_name("dialog-404")) != 0
             if is_404:
-                print("User " + username + " not exist.")
-                return "INVALID"
+                raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
             screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
             profile_img = self.parse_profile_img()
             is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
@@ -93,6 +93,8 @@ class InsUtilsNoLogin(InsUtils):
             time.sleep(3)
 
             return {"username": screen_name, "description": desc_str, "image": profile_img}
+        except InvalidAccountException as ex:
+            raise ex
         except Exception as ex:
             print(str(ex))
             return "INVALID"
@@ -100,11 +102,10 @@ class InsUtilsNoLogin(InsUtils):
     def parse(self, username):
         profile = self.parse_profile(username)
         if profile == 'INVALID':
-            print("Instagram account " + username + " is not available.")
-            return "INVALID"
+            raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
         print("Parse profile succeed.")
         if "status" in profile.keys() and profile["status"] in ["PRIVATE", "EMPTY"]:
-            return {"profile": profile}
+            return {"profile": profile, "posts_content": []}
         posts_urls = self.parse_posts()
         print("Parse posts url succeed, " + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(posts_urls)
@@ -134,8 +135,7 @@ class InsUtilsWithLogin(InsUtils):
         try:
             is_404 = len(self.browser.find_elements_by_class_name("dialog-404")) != 0
             if is_404:
-                print("User " + username + " not exist.")
-                return "INVALID"
+                raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
             screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
             profile_img = self.parse_profile_img()
             is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
@@ -161,6 +161,8 @@ class InsUtilsWithLogin(InsUtils):
             time.sleep(3)
 
             return {"username": screen_name, "following": following_num, "follower": follower_num, "description": desc_str, "image": profile_img}
+        except InvalidAccountException as ex:
+            raise ex
         except Exception as ex:
             print(str(ex))
             return "INVALID"
@@ -204,11 +206,10 @@ class InsUtilsWithLogin(InsUtils):
     def parse(self, username):
         profile = self.parse_profile(username)
         if profile == 'INVALID':
-            print("Instagram account " + username + " is not available.")
-            return "INVALID"
+            raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
         print("Parse profile succeed.")
         if "status" in profile.keys() and profile["status"] == "PRIVATE":
-            return {'profile': profile}
+            return {'profile': profile, "posts_content": []}
         following = self.parse_network()
         print("Parse following succeed, " + str(len(following)) + " followings.")
         posts_urls = self.parse_posts()

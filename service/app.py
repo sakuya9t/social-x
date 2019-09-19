@@ -50,6 +50,7 @@ def login_account():
     if res:
         database = Couch('credential')
         database.insert(data)
+        database.close()
 
     return make_response({'result': res})
 
@@ -69,7 +70,9 @@ def query():
     info2 = retrieve(account2, mode=REALTIME_MODE)
     score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
                             mode=REALTIME_MODE)
-    doc_id = Couch('scores').insert({'query': data, 'result': score})
+    db = Couch('scores')
+    doc_id = db.insert({'query': data, 'result': score})
+    db.close()
     return make_response({'result': score, 'doc_id': doc_id})
 
 
@@ -82,7 +85,9 @@ def feedback():
             {'result': 'ok'}
     """
     data = json.loads(request.get_data())
-    Couch('feedback').insert(data)
+    db = Couch('feedback')
+    db.insert(data)
+    db.close()
     return make_response({'result': 'ok'})
 
 
