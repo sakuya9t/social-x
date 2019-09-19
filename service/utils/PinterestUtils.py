@@ -30,7 +30,9 @@ def parse_pinterest(username):
 
     info = json.loads(soup.find("script", {"id": "initial-state"}).get_text())
     info = list(info['resources']['data']['UnauthReactUserProfileResource'].values())[0]['data']
-    info['profile']['image'] = info['profile']['image_xlarge_url']
+    # rename properties to match other platforms
+    info['profile']['image'] = info['profile'].pop('image_xlarge_url')
+    info['profile']['description'] = info['profile'].pop('about')
 
     pins = info['pins']
     pins = list(filter(lambda x: x['pin_join'] and x['pin_join']['annotations_with_links'], pins))
