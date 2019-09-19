@@ -1,19 +1,24 @@
-import re, ast
+import ast
+import os
+import re
 import string
-import textdistance, requests
-from nltk.corpus import wordnet
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
-from nltk.stem import WordNetLemmatizer
+import urllib.parse
+
+import numpy as np
+import requests
 import tensorflow as tf
 import tensorflow_hub as hub
-import numpy as np
-import urllib.parse
-from similarity.Config import Config
-from constant import CONFIG_PATH
+import textdistance
+from nltk.corpus import stopwords
+from nltk.corpus import wordnet
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
 
-import os
+from constant import CONFIG_PATH
+from similarity.Config import Config
+from sklearn.metrics.pairwise import cosine_similarity
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -110,6 +115,15 @@ def jaccard_counter_similarity(counter1, counter2):
     intersection = sum((counter1 & counter2).values())
     union = sum((counter1 | counter2).values())
     return 0 if union == 0 else intersection / union
+
+
+def uclassify_similarity(text1, text2):
+    topics1 = uclassify_topics(text1)
+    topics2 = uclassify_topics(text2)
+    keys = set().union(topics1, topics2)
+    vec1 = [topics1.get(key, 0) for key in keys]
+    vec2 = [topics2.get(key, 0) for key in keys]
+    return cosine_similarity([vec1], [vec2])[0][0]
 
 
 def uclassify_topics(text):
