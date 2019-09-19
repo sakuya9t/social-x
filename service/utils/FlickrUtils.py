@@ -30,7 +30,7 @@ class FlickrUtils(AbstractParser):
 
     def parse(self, username):
         self.set_user(username)
-        profile = self.parse_profile()
+        profile = self.parse_profile(username)
         posts = self.multi_thread_parse(self.parse_image_urls())
         following = self.get_followings()
         groups = self.get_user_groups()
@@ -89,7 +89,8 @@ class FlickrUtils(AbstractParser):
                 break
         return following_ids
 
-    def parse_profile(self):
+    def parse_profile(self, username):
+        self.set_user(username)
         profile = {}
         resp = requests.get(self.base_url + self.links['about'])
         data = resp.text

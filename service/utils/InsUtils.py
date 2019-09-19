@@ -208,7 +208,7 @@ class InsUtilsWithLogin(InsUtils):
             return "INVALID"
         print("Parse profile succeed.")
         if "status" in profile.keys() and profile["status"] == "PRIVATE":
-            return profile
+            return {'profile': profile}
         following = self.parse_network()
         print("Parse following succeed, " + str(len(following)) + " followings.")
         posts_urls = self.parse_posts()

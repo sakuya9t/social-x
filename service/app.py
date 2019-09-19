@@ -59,8 +59,8 @@ def query():
     data = json.loads(request.get_data())
     account1 = data['account1']
     account2 = data['account2']
-    info1 = retrieve(account1)
-    info2 = retrieve(account2)
+    info1 = retrieve(account1, mode=REALTIME_MODE)
+    info2 = retrieve(account2, mode=REALTIME_MODE)
     res = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']), mode=REALTIME_MODE)
     return make_response({'result': res})
 

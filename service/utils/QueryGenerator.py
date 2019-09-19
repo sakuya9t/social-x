@@ -1,5 +1,6 @@
 from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils
 from utils.Couch import Couch
+from constant import REALTIME_MODE
 
 PARSER = {'instagram': InsUtils.InsUtils,
           'twitter': TwiUtils.TwiUtils,
@@ -28,13 +29,17 @@ def execute_query(query):
         print(e)
 
 
-def retrieve(account):
+def retrieve(account, mode):
     query = generate_query(account)
-    db_result = execute_query(account)
+    db_result = execute_query(query)
     if not db_result:
         platform = account['platform'].lower()
         username = account['account']
         parser = factory(platform)
+        parse_result = parser.parse(username) if mode == REALTIME_MODE else {'profile': parser.parse_profile(username)}
+        Couch(db_name=platform).insert(parse_result)
+        return parse_result
+    return db_result
 
 
 def factory(classname):

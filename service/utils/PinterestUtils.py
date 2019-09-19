@@ -5,6 +5,8 @@ import json
 
 from utils.AbstractParser import AbstractParser
 
+base_pin_url = 'https://www.pinterest.com/pin/'
+
 
 def get_pin_annotation(pin):
     try:
@@ -26,9 +28,8 @@ def get_pin_annotation_parallel(pins):
     return results
 
 
-def parse_pinterest(username):
+def parse_pinterest(username, profile_only=False):
     url = "https://www.pinterest.com/{}".format(username)
-    base_pin_url = 'https://www.pinterest.com/pin/'
     resp = requests.get(url)
     data = resp.text
     soup = BeautifulSoup(data)
@@ -38,8 +39,18 @@ def parse_pinterest(username):
     # rename properties to match other platforms
     info['profile']['image'] = info['profile'].pop('image_xlarge_url')
     info['profile']['description'] = info['profile'].pop('about')
+    boards = [(x['name'], x['pin_count']) for x in info['boards']]
 
-    pins = info['pins']
+    if profile_only:
+        pins = info['pins']
+        pin_list = parse_pins(pins)
+        user_data = {'profile': info['profile'], 'posts_content': pin_list, 'boards': boards}
+    else:
+        user_data = info['profile']
+    return user_data
+
+
+def parse_pins(pins):
     pins = list(filter(lambda x: x['pin_join'] and x['pin_join']['annotations_with_links'], pins))
     pin_list = [{'labels': list(x['pin_join']['annotations_with_links'].keys()),
                  'url': base_pin_url + x['id'],
@@ -49,11 +60,12 @@ def parse_pinterest(username):
     for i in range(len(pin_list)):
         pin_list[i]['labels'] += additional_labels[i]
         pin_list[i]['labels'] = list(dict.fromkeys(pin_list[i]['labels']))
-    boards = [(x['name'], x['pin_count']) for x in info['boards']]
-    user_data = {'profile': info['profile'], 'posts_content': pin_list, 'boards': boards}
-    return user_data
+    return pin_list
 
 
 class PinterestUtils(AbstractParser):
     def parse(self, username):
         return parse_pinterest(username)
+
+    def parse_profile(self, username):
+        return parse_pinterest(username, profile_only=True)
