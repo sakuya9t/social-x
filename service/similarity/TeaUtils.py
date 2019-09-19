@@ -21,6 +21,8 @@ class TeaUtils:
         chrome_options.add_argument('--disable-gpu')
         self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
         self.browser.set_window_size(1920, 1080)
+        self.browser.set_page_load_timeout(1800)
+        self.browser.set_script_timeout(1800)
         self.login()
         
     def login(self):
