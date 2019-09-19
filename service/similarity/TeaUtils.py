@@ -21,6 +21,8 @@ class TeaUtils:
         chrome_options.add_argument('--disable-gpu')
         self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
         self.browser.set_window_size(1920, 1080)
+        self.browser.set_page_load_timeout(1800)
+        self.browser.set_script_timeout(1800)
         self.login()
         
     def login(self):
@@ -62,7 +64,7 @@ class TeaUtils:
                 time.sleep(5)
                 continue
 
-    def __del__(self):
+    def close(self):
         self.browser.quit()
 
 
@@ -74,7 +76,9 @@ def query_writing_style(text):
     readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
     if tea_enabled:
         text = ' '.join(text.split(' ')[:300])
-        tea_metrics = TeaUtils().getTextMetrics(text)
+        tea = TeaUtils()
+        tea_metrics = tea.getTextMetrics(text)
+        tea.close()
         return {'tea': tea_metrics, 'readbility': readbility_metrics}
     else:
         return {'readbility': readbility_metrics}
