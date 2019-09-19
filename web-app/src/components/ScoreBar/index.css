@@ -1,0 +1,19 @@
+.scorebar-container{
+    margin: 10px;
+    height: 2em;
+}
+
+.scorebar-indicator{
+    float: left;
+    height: 2em;
+    background-color: #37b5ff;
+}
+
+.scorebar-score{
+    float: left;
+    height: 1em;
+    margin-left:20px;
+    line-height: 1em;
+    font-size: 2em;
+    font-family: 'Raleway';
+}

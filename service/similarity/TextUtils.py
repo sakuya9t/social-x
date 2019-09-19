@@ -6,6 +6,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
+from collections import Counter
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -91,6 +92,12 @@ def distinct_read(filename):
             s.add(line)
             line = file.readline()
     return s
+
+
+def jaccard_counter_similarity(counter1, counter2):
+    intersection = sum((counter1 & counter2).values())
+    union = sum((counter1 | counter2).values())
+    return 0 if union == 0 else intersection / union
 
 
 if __name__ == '__main__':

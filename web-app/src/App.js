@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import { Navbar, Nav } from 'react-bootstrap';
 import Homepage from "./components/Homepage";
+import Aboutpage from "./components/AboutPage";
 import LogoImg from './resources/logo.png';
 
 function App() {
@@ -18,7 +19,7 @@ function App() {
 
 const Home = () => <Homepage />;
 
-const About = () => <h2>About</h2>;
+const About = () => <Aboutpage />;
 
 const Header= () => 
     <Navbar bg="light" expand="lg">
