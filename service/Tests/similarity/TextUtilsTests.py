@@ -2,7 +2,7 @@ import unittest
 from collections import Counter
 
 from similarity.TextUtils import jaccard_counter_similarity, singleword_similarity, uclassify_topics, \
-    uclassify_similarity
+    uclassify_similarity, desc_overlap_url
 
 
 class TextUtilsTests(unittest.TestCase):
@@ -866,3 +866,15 @@ class TextUtilsTests(unittest.TestCase):
         text2 = 'Before getting started, you may want to find out which IDEs and text editors are tailored to make Python editing easy, browse the list of introductory books, or look at code samples that you might find helpful.'
         score = uclassify_similarity(text1, text2)
         self.assertTrue(0 <= score <= 1)
+
+    def test_overlapping_urls(self):
+        info1 = {'platform': 'instagram', 'username': 'biscuit_boom',
+                 'desc': 'Follow me & be rewarded.Fin.;;www.twitter.com/biscuit_boom'}
+        info2 = {'platform': 'twitter', 'username': 'Biscuit_Boom',
+                 'desc': 'uniquely and naturally yours.'}
+        self.assertEqual(1, desc_overlap_url(info1, info2))
+        info1 = {'platform': 'instagram', 'username': 'biscuit_boom',
+                 'desc': 'Gvn Dmn;;Implementer of  & be rewarded.Fin.'}
+        info2 = {'platform': 'twitter', 'username': 'Biscuit_Boom',
+                 'desc': 'We are a quirky and fun event planning compat'}
+        self.assertEqual(0, desc_overlap_url(info1, info2))

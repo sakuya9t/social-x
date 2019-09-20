@@ -1,6 +1,6 @@
+from constant import BATCH_MODE
 from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils
 from utils.Couch import Couch
-from constant import REALTIME_MODE, BATCH_MODE
 
 PARSER = {'instagram': InsUtils.InsUtils,
           'twitter': TwiUtils.TwiUtils,

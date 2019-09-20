@@ -68,6 +68,8 @@ def query():
     account2 = data['account2']
     info1 = retrieve(account1, mode=REALTIME_MODE)
     info2 = retrieve(account2, mode=REALTIME_MODE)
+    info1['platform'] = account1['platform'].lower()
+    info2['platform'] = account2['platform'].lower()
     score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
                             mode=REALTIME_MODE)
     db = Couch(DATABASE_QUERY_RESULT)

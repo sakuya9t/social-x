@@ -14,6 +14,7 @@ from nltk.corpus import wordnet
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+from urlextract import URLExtract
 
 from constant import CONFIG_PATH
 from similarity.Config import Config
@@ -36,6 +37,7 @@ class TensorSimilarity:
         self.similarity_message_encodings = embed(self.similarity_input_placeholder)
 
     def similarity(self, msg1, msg2):
+        # GUSE similarity
         messages = (msg1, msg2)
         message_embeddings = self.session.run(
             self.similarity_message_encodings, feed_dict={self.similarity_input_placeholder: messages})
@@ -133,6 +135,31 @@ def uclassify_topics(text):
         .format(key=key, text=text)
     response = requests.get(url).text
     return ast.literal_eval(response)
+
+
+def intersection(lst1, lst2):
+    return set(lst1).intersection(lst2)
+
+
+def extract_urls(text):
+    return [re.sub(r'https?\/\/', '', x.lower()) for x in URLExtract().find_urls(text)]
+
+
+def _get_default_url(platform, username):
+    if platform in ['instagram', 'twitter', 'pinterest']:
+        return [x.lower() for x in ['{}.com/{}'.format(platform, username), 'www.{}.com/{}'.format(platform, username),
+                '{}.com/{}/'.format(platform, username), 'www.{}.com/{}/'.format(platform, username)]]
+    elif platform == 'flickr':
+        return [x.lower() for x in ['flickr.com/people/{}'.format(username), 'www.flickr.com/people/{}'.format(username),
+                'flickr.com/people/{}/'.format(username), 'www.flickr.com/people/{}/'.format(username)]]
+
+
+def desc_overlap_url(info1, info2):
+    url_1 = extract_urls(info1['desc'])
+    url_2 = extract_urls(info2['desc'])
+    url_1 += _get_default_url(info1['platform'], info1['username'])
+    url_2 += _get_default_url(info2['platform'], info2['username'])
+    return 1 if len(intersection(url_1, url_2)) > 0 else 0
 
 
 if __name__ == '__main__':
