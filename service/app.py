@@ -10,7 +10,7 @@ import json
 
 from utils.QueryGenerator import retrieve
 from utils.TwiUtils import TwiUtilsWithLogin
-from constant import REALTIME_MODE
+from constant import REALTIME_MODE, DATABASE_QUERY_RESULT, DATABASE_FEEDBACK, DATABASE_CREDENTIAL
 
 app = Flask(__name__)
 CORS(app)
@@ -48,7 +48,7 @@ def login_account():
     instance.set_account((username, password))
     res = instance.login()
     if res:
-        database = Couch('credential')
+        database = Couch(DATABASE_CREDENTIAL)
         database.insert(data)
         database.close()
 
@@ -70,7 +70,7 @@ def query():
     info2 = retrieve(account2, mode=REALTIME_MODE)
     score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
                             mode=REALTIME_MODE)
-    db = Couch('scores')
+    db = Couch(DATABASE_QUERY_RESULT)
     doc_id = db.insert({'query': data, 'result': score})
     db.close()
     return make_response({'result': score, 'doc_id': doc_id})
@@ -85,7 +85,7 @@ def feedback():
             {'result': 'ok'}
     """
     data = json.loads(request.get_data())
-    db = Couch('feedback')
+    db = Couch(DATABASE_FEEDBACK)
     db.insert(data)
     db.close()
     return make_response({'result': 'ok'})

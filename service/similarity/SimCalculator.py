@@ -2,7 +2,7 @@ from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
 from similarity.TextUtils import TensorSimilarity, singleword_similarity
-from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE
+from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE, DATABASE_SIMILARITY_VECTOR
 from utils.Couch import Couch
 
 
@@ -12,7 +12,7 @@ class SimCalculator:
         self.semantic_sim = TensorSimilarity()
 
     def store_result(self, vector):
-        database = Couch("similarity")
+        database = Couch(DATABASE_SIMILARITY_VECTOR)
         database.distinct_insert(vector)
 
     def calc(self, info1, info2, enable_networking, mode):
