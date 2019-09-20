@@ -8,12 +8,13 @@ from bs4 import BeautifulSoup
 import requests
 from multiprocessing.dummy import Pool as ThreadPool
 from constant import DRIVER_PATH
+from utils.AbstractParser import AbstractParser
 
 
-class FlickrUtils:
-    def __init__(self, showbrowser):
+class FlickrUtils(AbstractParser):
+    def __init__(self, displayed=False):
         chrome_options = Options()
-        if not showbrowser:
+        if not displayed:
             chrome_options.add_argument('--headless')
             chrome_options.add_argument('--disable-gpu')
         self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
@@ -29,7 +30,7 @@ class FlickrUtils:
 
     def parse(self, username):
         self.set_user(username)
-        profile = self.parse_profile()
+        profile = self.parse_profile(username)
         posts = self.multi_thread_parse(self.parse_image_urls())
         following = self.get_followings()
         groups = self.get_user_groups()
@@ -88,8 +89,9 @@ class FlickrUtils:
                 break
         return following_ids
 
-    def parse_profile(self):
-        profile = {}
+    def parse_profile(self, username):
+        self.set_user(username)
+        profile = {'username': username}
         resp = requests.get(self.base_url + self.links['about'])
         data = resp.text
         soup = BeautifulSoup(data)

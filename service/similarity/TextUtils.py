@@ -1,19 +1,26 @@
+import ast
+import os
 import re
 import string
+import urllib.parse
+
+import numpy as np
+import requests
+import tensorflow as tf
+import tensorflow_hub as hub
 import textdistance
-from nltk.corpus import wordnet
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.corpus import wordnet
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
-from collections import Counter
+from nltk.tokenize import word_tokenize
 
-import os
+from constant import CONFIG_PATH
+from similarity.Config import Config
+from sklearn.metrics.pairwise import cosine_similarity
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-import tensorflow_hub as hub
-import numpy as np
 
 
 class TensorSimilarity:
@@ -25,7 +32,7 @@ class TensorSimilarity:
         embed = hub.Module(module_url)
         self.session = tf.Session()
         self.session.run([tf.global_variables_initializer(), tf.tables_initializer()])
-        self.similarity_input_placeholder = tf.placeholder(tf.string, shape=(None))
+        self.similarity_input_placeholder = tf.placeholder(tf.string, shape=None)
         self.similarity_message_encodings = embed(self.similarity_input_placeholder)
 
     def similarity(self, msg1, msg2):
@@ -75,6 +82,16 @@ def similarity(str1, str2, type):
     return 0
 
 
+def singleword_similarity(profile1, profile2):
+    keys = ['username', 'name', 'screen_name', 'full_name']
+    res = -1
+    for key1 in keys:
+        for key2 in keys:
+            if key1 in profile1.keys() and key2 in profile2.keys():
+                res = max(res, textdistance.levenshtein.normalized_similarity(profile1[key1], profile2[key2]))
+    return res
+
+
 def topics_in_posts(posts):
     topics = []
     for post in posts:
@@ -98,6 +115,24 @@ def jaccard_counter_similarity(counter1, counter2):
     intersection = sum((counter1 & counter2).values())
     union = sum((counter1 | counter2).values())
     return 0 if union == 0 else intersection / union
+
+
+def uclassify_similarity(text1, text2):
+    topics1 = uclassify_topics(text1)
+    topics2 = uclassify_topics(text2)
+    keys = set().union(topics1, topics2)
+    vec1 = [topics1.get(key, 0) for key in keys]
+    vec2 = [topics2.get(key, 0) for key in keys]
+    return cosine_similarity([vec1], [vec2])[0][0]
+
+
+def uclassify_topics(text):
+    key = Config(CONFIG_PATH).get('uclassify/apikey')
+    text = urllib.parse.quote_plus(text)
+    url = 'https://api.uclassify.com/v1/uclassify/topics/classify?readkey={key}&text={text}'\
+        .format(key=key, text=text)
+    response = requests.get(url).text
+    return ast.literal_eval(response)
 
 
 if __name__ == '__main__':

@@ -1,8 +1,9 @@
 from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
-from similarity.TextUtils import TensorSimilarity
-from constant import CONFIG_PATH
+from similarity.TextUtils import TensorSimilarity, singleword_similarity
+from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE, DATABASE_SIMILARITY_VECTOR
+from utils.Couch import Couch
 
 
 class SimCalculator:
@@ -10,16 +11,22 @@ class SimCalculator:
         self.config = Config(CONFIG_PATH)
         self.semantic_sim = TensorSimilarity()
 
-    def calc(self, info1, info2, enable_networking):
-        vector = self.vectorize(info1, info2)
+    def store_result(self, vector):
+        database = Couch(DATABASE_SIMILARITY_VECTOR)
+        database.distinct_insert(vector)
+
+    def calc(self, info1, info2, enable_networking, mode):
+        vector = self.vectorize(info1, info2, mode)
         if enable_networking:
             vector['network'] = self.network_similarity(info1, info2)
-        return 1
+        return vector
 
-    def vectorize(self, info1, info2):
+    def vectorize(self, info1, info2, mode):
         result = {}
         profile1, profile2 = info1['profile'], info2['profile']
+        result['username'] = singleword_similarity(profile1, profile2)
         result['profileImage'] = self.profile_img_similarity(profile1['image'], profile2['image'])
+        result['self_desc'] = self.writing_style_similarity(profile1.get('description', ''), profile2.get('description', ''))
 
         posts1 = info1['posts_content'] if 'posts_content' in info1.keys() else []
         posts2 = info2['posts_content'] if 'posts_content' in info2.keys() else []
