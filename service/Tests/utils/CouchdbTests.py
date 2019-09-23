@@ -42,6 +42,13 @@ class CouchdbTests(unittest.TestCase):
         conn.close()
         self.assertEqual(1, len(query_result))
 
+    def test_query_latest(self):
+        conn = Couch("test")
+        selector = {"abc": "def"}
+        res = conn.query_latest_change(selector)
+        conn.close()
+        self.assertEqual(1, len(res))
+
 
 if __name__ == '__main__':
     unittest.main()

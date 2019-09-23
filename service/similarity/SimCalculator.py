@@ -1,3 +1,6 @@
+import calendar
+import time
+
 from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
@@ -18,6 +21,7 @@ class SimCalculator:
 
     def calc(self, info1, info2, enable_networking, mode):
         vector = self.vectorize(info1, info2, mode)
+        vector['timestamp'] = calendar.timegm(time.gmtime())
         if enable_networking:
             vector['network'] = network_sim(info1, info2)
         return vector
@@ -45,9 +49,24 @@ class SimCalculator:
         logger.info('Evaluating writing style...')
         result['writing_style'] = writing_style_sim(posts1, posts2)
         logger.info('Evaluating post similarity...')
-        result['post_text'] = overall_post_sim(posts1, posts2) if mode == REALTIME_MODE else max_post_sim(posts1,
-                                                                                                          posts2)
+        result['post_text'] = self.overall_post_sim(posts1, posts2) if mode == REALTIME_MODE \
+            else self.max_post_sim(posts1, posts2)
         return result
+
+    def overall_post_sim(self, posts1, posts2):
+        posts1 = _get_post_text(posts1)
+        posts2 = _get_post_text(posts2)
+        sim = self.semantic_sim.similarity(' '.join(posts1), ' '.join(posts2))
+        return sim
+
+    def max_post_sim(self, posts1, posts2):
+        posts1 = _get_post_text(posts1)
+        posts2 = _get_post_text(posts2)
+        sim = 0
+        for p1 in posts1:
+            for p2 in posts2:
+                sim = max(sim, self.semantic_sim.similarity(p1, p2))
+        return sim
 
 
 def profile_img_sim(url1, url2):
@@ -55,10 +74,8 @@ def profile_img_sim(url1, url2):
 
 
 def writing_style_sim(posts1, posts2):
-    if len(posts1) > 0 and not isinstance(posts1[0], str):
-        posts1 = [x['text'] for x in posts1]
-    if len(posts2) > 0 and not isinstance(posts2[0], str):
-        posts2 = [x['text'] for x in posts2]
+    posts1 = _get_post_text(posts1)
+    posts2 = _get_post_text(posts2)
     all_posts_text = [" ".join(posts1), " ".join(posts2)]
     writing_style = [query_writing_style(x) for x in all_posts_text]
     return writing_style_similarity(writing_style[0], writing_style[1])
@@ -68,9 +85,9 @@ def network_sim(info1, info2):
     return 0.0
 
 
-def overall_post_sim(posts1, posts2):
-    return 0.0
+def _get_post_text(posts):
+    if len(posts) > 0 and not isinstance(posts[0], str):
+        posts = [x['text'] for x in posts]
+    return posts
 
 
-def max_post_sim(posts1, posts2):
-    return 0.0

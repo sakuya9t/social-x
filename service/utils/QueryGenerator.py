@@ -24,6 +24,8 @@ def execute_query(query):
     try:
         db = Couch(db_name=query['database'])
         res = db.query(selector=query['selector'])
+        if len(res) > 1:
+            res = db.query_latest_change(query['selector'])
         db.close()
         return res
 
@@ -61,7 +63,7 @@ def parse_and_insert(account, mode):
     platform = account['platform'].lower()
     username = account['account']
     parser = factory(platform)
-    parse_result = parser.parse(username) if mode == BATCH_MODE else {'profile': parser.parse_profile(username)}
+    parse_result = parser.parse(username) if mode == BATCH_MODE else {'profile': parser.parse_profile(username), 'posts_content': []}
     logger.info(parse_result)
     parser.close()
     db = Couch(db_name=platform)

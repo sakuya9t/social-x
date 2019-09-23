@@ -66,15 +66,18 @@ def query():
     data = json.loads(request.get_data())
     account1 = data['account1']
     account2 = data['account2']
-    info1 = retrieve(account1, mode=REALTIME_MODE)
-    info2 = retrieve(account2, mode=REALTIME_MODE)
-    info1['platform'] = account1['platform'].lower()
-    info2['platform'] = account2['platform'].lower()
-    score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
+    score = algoModule.find_existing(account1, account2)
+    if len(score) == 0:
+        info1 = retrieve(account1, mode=REALTIME_MODE)
+        info2 = retrieve(account2, mode=REALTIME_MODE)
+        info1['platform'] = account1['platform'].lower()
+        info2['platform'] = account2['platform'].lower()
+        score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
                             mode=REALTIME_MODE)
-    db = Couch(DATABASE_QUERY_RESULT)
-    doc_id = db.insert({'query': data, 'result': score})
-    db.close()
+        db = Couch(DATABASE_QUERY_RESULT)
+        db.insert({'query': data, 'result': score})
+        db.close()
+
     return make_response({'result': score, 'doc_id': doc_id})
 
 
