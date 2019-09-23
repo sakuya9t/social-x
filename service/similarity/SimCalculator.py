@@ -15,9 +15,14 @@ class SimCalculator:
         self.config = Config(CONFIG_PATH)
         self.semantic_sim = TensorSimilarity()
 
-    def store_result(self, vector):
+    @staticmethod
+    def store_result(vector):
         database = Couch(DATABASE_SIMILARITY_VECTOR)
         database.distinct_insert(vector)
+
+    def fetch_vector(self, info1, info2):
+        # todo: query db to find already calculated vector
+        pass
 
     def calc(self, info1, info2, enable_networking, mode):
         vector = self.vectorize(info1, info2, mode)

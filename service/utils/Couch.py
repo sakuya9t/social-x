@@ -102,6 +102,11 @@ class Couch:
             doc.delete()
 
     def query_latest_change(self, selector):
+        """
+        Query latest item sorted by timestamp. Returns only timestamp in documents.
+        :param selector: dictionary
+        :return: a list that contains 1 or 0 docs
+        """
         q_res = self.query(selector)
         q_res = list(filter(lambda x: 'timestamp' in x.keys(), q_res))
         res = sorted(q_res, key=lambda x: x['timestamp'])
