@@ -4,6 +4,7 @@ import selenium
 from selenium.webdriver.chrome.options import Options
 import time
 
+from utils import logger
 from utils.AbstractParser import AbstractParser
 from constant import DRIVER_PATH
 from utils.InvalidAccountException import InvalidAccountException
@@ -39,12 +40,12 @@ class TwiUtils(AbstractParser):
         pass
 
     def parse_posts(self, username):
-        print("Parsing tweets of user: " + username)
+        logger.info("Start parsing Twitter user: " + username)
         if self.isProtected():
-            print("Account {name} is protected.".format(name=username))
+            logger.info("Twitter account {name} is protected.".format(name=username))
             return None
         if self.isSuspended():
-            print("Account {name} is suspended.".format(name=username))
+            logger.info("Twitter account {name} is suspended.".format(name=username))
             return None
         self.browser.get("https://www.twitter.com/" + username)
         time.sleep(3)
@@ -72,10 +73,9 @@ class TwiUtils(AbstractParser):
             d_height = curr_height
             y_offset = y_pos
             time.sleep(0.1)
-            # print('{} tweets parsed.'.format(len(post_text)), end='\r')
-            # sys.stdout.flush()
             if len(post_text) > 1000:
                 break
+        logger.info("{} tweets parsed.".format(len(post_text)))
         return list(post_text)
 
     def close(self):
@@ -103,6 +103,7 @@ class TwiUtilsNoLogin(TwiUtils):
         profile_card = self.browser.find_element_by_class_name("ProfileHeaderCard")
         name = profile_card.find_element_by_class_name("ProfileHeaderCard-name").text
         screen_name = profile_card.find_element_by_class_name("ProfileHeaderCard-screenname").text
+        screen_name = screen_name[1:] if screen_name[0] == '@' else screen_name
         self_desc = profile_card.find_element_by_class_name("ProfileHeaderCard-bio").text
         location = profile_card.find_element_by_class_name("ProfileHeaderCard-location").text
         conn_url = profile_card.find_element_by_class_name("ProfileHeaderCard-urlText").text

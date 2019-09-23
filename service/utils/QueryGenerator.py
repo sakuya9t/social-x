@@ -1,9 +1,10 @@
 from constant import BATCH_MODE
-from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils
+from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils, logger
 from utils.Couch import Couch
 
-PARSER = {'instagram': InsUtils.InsUtils,
-          'twitter': TwiUtils.TwiUtils,
+PARSER = {
+          'instagram': InsUtils.InsUtilsNoLogin,
+          'twitter': TwiUtils.TwiUtilsNoLogin,
           'pinterest': PinterestUtils.PinterestUtils,
           'flickr': FlickrUtils.FlickrUtils}
 
@@ -31,16 +32,21 @@ def execute_query(query):
 
 
 def retrieve(account, mode):
+    """
+    :param account: {'platform': xxx, 'account': yyy}
+    :param mode: BATCH_MODE || REALTIME_MODE
+    :return: JSON formatted account
+    """
     query = generate_query(account)
     db_result = execute_query(query)
     if not db_result:
-        return parse_and_insert(account, mode)
+        return parse_and_insert(account, mode)[0]
     if mode == BATCH_MODE:
         info = db_result[0]
         if 'posts_content' not in info.keys():
             delete_if_exist(account)
-            return parse_and_insert(account, mode)
-    return db_result
+            return parse_and_insert(account, mode)[0]
+    return db_result[0]
 
 
 def delete_if_exist(account):
@@ -56,6 +62,7 @@ def parse_and_insert(account, mode):
     username = account['account']
     parser = factory(platform)
     parse_result = parser.parse(username) if mode == BATCH_MODE else {'profile': parser.parse_profile(username)}
+    logger.info(parse_result)
     parser.close()
     db = Couch(db_name=platform)
     db.insert(parse_result)

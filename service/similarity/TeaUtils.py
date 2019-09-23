@@ -111,7 +111,7 @@ def writing_style_similarity(vector1, vector2):
     tea1 = np.true_divide(tea1, np.linalg.norm(tea1))
     tea2 = np.asarray(value2, dtype=np.float)
     tea2 = np.true_divide(tea2, np.linalg.norm(tea2))
-    return [cosine_similarity(tea1, tea2), cosine_similarity(read1, read2)]
+    return {'tea': cosine_similarity(tea1, tea2), 'readability': cosine_similarity(read1, read2)}
 
 
 def cosine_similarity(vA, vB):

@@ -1,13 +1,9 @@
 import ast
-import os
 import re
 import string
 import urllib.parse
-
 import numpy as np
 import requests
-import tensorflow as tf
-import tensorflow_hub as hub
 import textdistance
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet
@@ -15,13 +11,14 @@ from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from urlextract import URLExtract
-
 from constant import CONFIG_PATH
 from similarity.Config import Config
 from sklearn.metrics.pairwise import cosine_similarity
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+import warnings
+warnings.filterwarnings('ignore', category=FutureWarning)
+import tensorflow as tf
+import tensorflow_hub as hub
 
 
 class TensorSimilarity:
@@ -31,9 +28,9 @@ class TensorSimilarity:
     def initialize(self):
         module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
         embed = hub.Module(module_url)
-        self.session = tf.Session()
-        self.session.run([tf.global_variables_initializer(), tf.tables_initializer()])
-        self.similarity_input_placeholder = tf.placeholder(tf.string, shape=None)
+        self.session = tf.compat.v1.Session()
+        self.session.run([tf.compat.v1.global_variables_initializer(), tf.compat.v1.tables_initializer()])
+        self.similarity_input_placeholder = tf.compat.v1.placeholder(tf.string, shape=None)
         self.similarity_message_encodings = embed(self.similarity_input_placeholder)
 
     def similarity(self, msg1, msg2):
