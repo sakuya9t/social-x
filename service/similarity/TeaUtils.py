@@ -12,6 +12,7 @@ import string
 import time
 
 from similarity.Config import Config
+from utils import logger
 
 
 class TeaUtils:
@@ -72,8 +73,14 @@ tea_enabled = bool(Config(ALGOCONFIG_PATH).get('tea-enabled'))
 
 
 def query_writing_style(text):
+    if len(text) == 0:
+        return {}
     text = ''.join(c for c in text if c <= '\uFFFF')
-    readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
+    try:
+        readbility_metrics = dict(readability.getmeasures(text, lang='en')['readability grades'])
+    except ValueError:
+        readbility_metrics = 0.5
+        logger.warning('Text is Empty, readability return 0.5 as default.')
     if tea_enabled:
         text = ' '.join(text.split(' ')[:300])
         tea = TeaUtils()
@@ -97,12 +104,14 @@ def randomString(stringLength=10):
 
 
 def writing_style_similarity(vector1, vector2):
+    if not (vector1 and vector2):
+        return {'tea': 0.0, 'readability': 0.0} if tea_enabled else {'readability': 0.0}
     read1 = np.asarray(list(vector1['readbility'].values()), dtype=np.float)
     read1 = np.true_divide(read1, np.linalg.norm(read1))
     read2 = np.asarray(list(vector2['readbility'].values()), dtype=np.float)
     read2 = np.true_divide(read2, np.linalg.norm(read2))
     if not tea_enabled:
-        return [cosine_similarity(read1, read2)]
+        return {'readability': cosine_similarity(read1, read2)}
     value1 = list(vector1['tea'].values())[:-1]
     value1.append(vector1['tea']['Flesch Kincaid Grade Level'] / 10)
     value2 = list(vector2['tea'].values())[:-1]

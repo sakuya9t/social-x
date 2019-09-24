@@ -111,3 +111,24 @@ class Couch:
         q_res = list(filter(lambda x: 'timestamp' in x.keys(), q_res))
         res = sorted(q_res, key=lambda x: x['timestamp'])
         return res[-1:]
+
+
+def _convert_float(obj):
+    for key, value in obj.items():
+        if isinstance(value, float):
+            obj[key] = str(value)
+        elif isinstance(value, dict):
+            obj[key] = _convert_float(value)
+    return obj
+
+
+def _restore_float(obj):
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            obj[key] = _restore_float(value)
+        else:
+            try:
+                obj[key] = float(value)
+            except ValueError:
+                pass
+    return obj

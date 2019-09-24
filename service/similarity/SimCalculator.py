@@ -7,7 +7,7 @@ from similarity.TeaUtils import query_writing_style, writing_style_similarity
 from similarity.TextUtils import TensorSimilarity, singleword_similarity, desc_overlap_url
 from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE, DATABASE_SIMILARITY_VECTOR
 from utils import logger
-from utils.Couch import Couch
+from utils.Couch import Couch, _convert_float, _restore_float
 
 
 class SimCalculator:
@@ -16,15 +16,30 @@ class SimCalculator:
         self.semantic_sim = TensorSimilarity()
 
     @staticmethod
-    def store_result(vector):
+    def store_result(info1, info2, vector):
         database = Couch(DATABASE_SIMILARITY_VECTOR)
-        database.distinct_insert(vector)
+        doc = {'platform1': info1['platform'], 'platform2': info2['platform'],
+               'username1': info1['profile']['username'], 'username2': info2['profile']['username'],
+               'vector': vector}
+        logger.info('Storing result: {}'.format(doc))
+        doc_id = database.distinct_insert(_convert_float(doc))
+        database.close()
+        return doc_id
 
-    def fetch_vector(self, info1, info2):
-        # todo: query db to find already calculated vector
-        pass
+    @staticmethod
+    def fetch_vector(info1, info2):
+        selector = {'platform1': info1['platform'], 'platform2': info2['platform'],
+                    'username1': info1['profile']['username'], 'username2': info2['profile']['username']}
+        database = Couch(DATABASE_SIMILARITY_VECTOR)
+        query_res = database.query_latest_change(selector)
+        return [_restore_float(x) for x in query_res]
 
     def calc(self, info1, info2, enable_networking, mode):
+        if mode == REALTIME_MODE:
+            existing_value = self.fetch_vector(info1, info2)
+            if len(existing_value) > 0:
+                logger.info('Similarity score already exist, return in REAL TIME MODE....')
+                return existing_value[0]
         vector = self.vectorize(info1, info2, mode)
         vector['timestamp'] = calendar.timegm(time.gmtime())
         if enable_networking:
@@ -51,6 +66,9 @@ class SimCalculator:
         posts1 = info1['posts_content'] if 'posts_content' in info1.keys() else []
         posts2 = info2['posts_content'] if 'posts_content' in info2.keys() else []
 
+        if mode == REALTIME_MODE and len(posts1) == 0 and len(posts2) == 0:
+            return result
+
         logger.info('Evaluating writing style...')
         result['writing_style'] = writing_style_sim(posts1, posts2)
         logger.info('Evaluating post similarity...')
@@ -75,14 +93,14 @@ class SimCalculator:
 
 
 def profile_img_sim(url1, url2):
-    return webimage_similarity(url1, url2)['resnet18']
+    return webimage_similarity(url1, url2)['resnet18'].item()
 
 
 def writing_style_sim(posts1, posts2):
     posts1 = _get_post_text(posts1)
     posts2 = _get_post_text(posts2)
     all_posts_text = [" ".join(posts1), " ".join(posts2)]
-    writing_style = [query_writing_style(x) for x in all_posts_text]
+    writing_style = [query_writing_style(x) for x in all_posts_text]  # todo: handle timeout
     return writing_style_similarity(writing_style[0], writing_style[1])
 
 
@@ -94,5 +112,4 @@ def _get_post_text(posts):
     if len(posts) > 0 and not isinstance(posts[0], str):
         posts = [x['text'] for x in posts]
     return posts
-
 

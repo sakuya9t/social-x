@@ -1,6 +1,5 @@
 import unittest
 
-
 from constant import BATCH_MODE, REALTIME_MODE
 from similarity.SimCalculator import SimCalculator
 from utils.QueryGenerator import retrieve
@@ -13,26 +12,28 @@ class SimCalculatorTests(unittest.TestCase):
         self.assertIsNotNone(calculator)
 
     def test_generate_vector_batch(self):
+        handler = SimCalculator()
         account1 = {'platform': 'twitter', 'account': 'tohtohchan'}
         account2 = {'platform': 'instagram', 'account': 'tohtohchan'}
         info1 = retrieve(account1, BATCH_MODE)
         info2 = retrieve(account2, BATCH_MODE)
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
-        vector = SimCalculator().vectorize(info1, info2, BATCH_MODE)
-        print(vector)
-        self.assertTrue(len(vector.items()) > 0)
+        vector = handler.vectorize(info1, info2, BATCH_MODE)
+        doc_id = handler.store_result(info1, info2, vector)
+        self.assertIsNotNone(doc_id)
 
     def test_generate_vector_realtime(self):
+        handler = SimCalculator()
         account1 = {'platform': 'twitter', 'account': '1angharad_rees'}
         account2 = {'platform': 'instagram', 'account': 'kaligraphicprint'}
         info1 = retrieve(account1, REALTIME_MODE)
         info2 = retrieve(account2, REALTIME_MODE)
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
-        vector = SimCalculator().vectorize(info1, info2, REALTIME_MODE)
-        print(vector)
-        self.assertTrue(len(vector.items()) > 0)
+        vector = handler.vectorize(info1, info2, REALTIME_MODE)
+        doc_id = handler.store_result(info1, info2, vector)
+        self.assertIsNotNone(doc_id)
 
     def test_post_overall_similarity(self):
         posts1 = ['', "THINGS THAT MAKE WRITERS CRY\n- you want to word but the words don't want you\n- it was an amazing movie in your head but a glob on paper\n- something precious was deleted!!!!\n- apparently doing summoning rituals is less effective then, uh, sitting down to just write?? disappointing", 'Morning Coffee Shot - today, yummy Three Beans Coffee in Manly, while I get proofing the print copy of Fire Heart \n \n#writerslife #writingcommunity #ilovesydney', 'Oh! The joy of seeing my comic scripts produced is just the best feeling ever! \n\nSo magical to see frames illustrated exactly as I saw them in my head. \n\nYou illustrators are insanely magical beings  I salut you!! \n#amwriting #ponyhour', 'This is me and my heart tearing in two at the OA news.\n\nGoing to do the movements tonight in hope of travelling to another dimension where @netflix doesn’t mess up and @The_OA continues... \n\n#RenewTheOA', '#writingadvice #writingtips', 'Morning coffee by the lake? Yes please thank you very much! ', 'Read this thread.']
