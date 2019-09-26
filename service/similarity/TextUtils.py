@@ -1,7 +1,7 @@
 import ast
+import json
 import re
 import string
-import urllib.parse
 import numpy as np
 import requests
 import textdistance
@@ -130,12 +130,18 @@ def uclassify_similarity(text1, text2):
 
 
 def uclassify_topics(text):
-    key = Config(CONFIG_PATH).get('uclassify/apikey')
-    text = urllib.parse.quote_plus(text)
-    url = 'https://api.uclassify.com/v1/uclassify/topics/classify?readkey={key}&text={text}'\
-        .format(key=key, text=text)
-    response = requests.get(url).text
-    return ast.literal_eval(response)
+    try:
+        key = Config(CONFIG_PATH).get('uclassify/apikey')
+        url = 'https://api.uclassify.com/v1/uClassify/Topics/classify'
+        header = {'Authorization': 'Token {}'.format(key), 'Content-Type': 'application/json'}
+        data = {'texts': [text]}
+        response = requests.post(url=url, data=json.dumps(data), headers=header)
+        resp_data = ast.literal_eval(response.text)[0]['classification']
+        res = {x['className']: x['p'] for x in resp_data}
+        return res
+    except Exception as ex:
+        print(text)
+        print(ex)
 
 
 def intersection(lst1, lst2):
