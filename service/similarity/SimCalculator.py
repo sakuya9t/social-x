@@ -4,8 +4,8 @@ import time
 from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
-from similarity.TextUtils import TensorSimilarity, singleword_similarity, desc_overlap_url
-from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE, DATABASE_SIMILARITY_VECTOR
+from similarity.TextUtils import TensorSimilarity, singleword_similarity, desc_overlap_url, uclassify_similarity
+from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE, DATABASE_SIMILARITY_VECTOR, ALGOCONFIG_PATH
 from utils import logger
 from utils.Couch import Couch, _convert_float, _restore_float
 
@@ -72,8 +72,10 @@ class SimCalculator:
         logger.info('Evaluating writing style...')
         result['writing_style'] = writing_style_sim(posts1, posts2)
         logger.info('Evaluating post similarity...')
-        result['post_text'] = self.overall_post_sim(posts1, posts2) if mode == REALTIME_MODE \
-            else self.max_post_sim(posts1, posts2)
+
+        max_post_enabled = bool(Config(ALGOCONFIG_PATH).get('max-post-similarity-enabled'))
+        result['post_text'] = self.max_post_sim(posts1, posts2) if max_post_enabled else self.overall_post_sim(posts1, posts2)
+        result['uclassify'] = uclassify_similarity(" ".join(posts1), " ".join(posts2))
         return result
 
     def overall_post_sim(self, posts1, posts2):

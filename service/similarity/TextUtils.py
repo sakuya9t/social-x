@@ -87,7 +87,11 @@ def singleword_similarity(profile1, profile2):
     for key1 in keys:
         for key2 in keys:
             if key1 in profile1.keys() and key2 in profile2.keys():
-                res = max(res, textdistance.levenshtein.normalized_similarity(profile1[key1], profile2[key2]))
+                w1 = profile1[key1]
+                w2 = profile2[key2]
+                w1 = w1[1:] if w1[0] == '@' else w1
+                w2 = w2[1:] if w2[0] == '@' else w2
+                res = max(res, textdistance.levenshtein.normalized_similarity(w1, w2))
     return res
 
 

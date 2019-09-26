@@ -12,7 +12,7 @@ PARSER = {
 def generate_query(account):
     try:
         db_name = account['platform'].lower()
-        username = account['account']
+        username = '@' + account['account'] if db_name == 'twitter' else account['account']
         query = {"profile": {"username": username}}
         return {"database": db_name, "selector": query}
 
@@ -41,14 +41,18 @@ def retrieve(account, mode):
     """
     query = generate_query(account)
     db_result = execute_query(query)
+    res = {}
     if not db_result:
-        return parse_and_insert(account, mode)[0]
-    if mode == BATCH_MODE:
-        info = db_result[0]
-        if 'posts_content' not in info.keys():
+        res = parse_and_insert(account, mode)[0]
+    elif mode == BATCH_MODE:
+        res = db_result[0]
+        if 'posts_content' not in res.keys():
             delete_if_exist(account)
-            return parse_and_insert(account, mode)[0]
-    return db_result[0]
+            res = parse_and_insert(account, mode)[0]
+    else:
+        res = db_result[0]
+    res['platform'] = account['platform']
+    return res
 
 
 def delete_if_exist(account):
