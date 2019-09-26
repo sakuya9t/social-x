@@ -232,3 +232,9 @@ def find_post_owner(url):
     text = soup.find_all("script", {"type": "application/ld+json"})[0].text
     username = ast.literal_eval(re.sub(r'[\n ]', "", text))['author']['alternateName'].replace('@', '')
     return username
+
+
+def is_valid_instagram_data(content):
+    if 'posts_content' not in content.keys():
+        return 'profile' in content.keys() and 'status' in content['profile'].keys()
+    return True

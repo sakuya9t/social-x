@@ -1,6 +1,7 @@
 from constant import BATCH_MODE
 from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils, logger
 from utils.Couch import Couch
+from utils.InsUtils import is_valid_instagram_data
 
 PARSER = {
           'instagram': InsUtils.InsUtilsNoLogin,
@@ -41,14 +42,16 @@ def retrieve(account, mode):
     """
     query = generate_query(account)
     db_result = execute_query(query)
-    res = {}
     if not db_result:
         res = parse_and_insert(account, mode)[0]
     elif mode == BATCH_MODE:
         res = db_result[0]
         if 'posts_content' not in res.keys():
-            delete_if_exist(account)
-            res = parse_and_insert(account, mode)[0]
+            if account['platform'].lower() == 'instagram' and is_valid_instagram_data(res):
+                pass
+            else:
+                delete_if_exist(account)
+                res = parse_and_insert(account, mode)[0]
     else:
         res = db_result[0]
     res['platform'] = account['platform']

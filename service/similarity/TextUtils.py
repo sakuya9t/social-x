@@ -16,6 +16,9 @@ from similarity.Config import Config
 from sklearn.metrics.pairwise import cosine_similarity
 
 import warnings
+
+from utils import logger
+
 warnings.filterwarnings('ignore', category=FutureWarning)
 import tensorflow as tf
 import tensorflow_hub as hub
@@ -140,8 +143,7 @@ def uclassify_topics(text):
         res = {x['className']: x['p'] for x in resp_data}
         return res
     except Exception as ex:
-        print(text)
-        print(ex)
+        logger.error('Error when uClassifying text: {}'.format(ex))
 
 
 def intersection(lst1, lst2):

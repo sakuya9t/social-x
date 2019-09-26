@@ -63,6 +63,11 @@ class QueryGeneratorTests(unittest.TestCase):
         for item in query_result:
             self.assertTrue('profile' in item.keys() and item['profile']['username'] == 'sakuranyochan')
 
+    def test_retrieve_instagram_posts_not_exist_should_not_parse(self):
+        selector = {'platform': 'Instagram', 'account': 'thedunkstar'}
+        data = retrieve(selector, BATCH_MODE)
+        self.assertTrue('posts_content' not in data.keys())
+
 
 if __name__ == '__main__':
     unittest.main()
