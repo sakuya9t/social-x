@@ -75,7 +75,9 @@ class SimCalculator:
 
         max_post_enabled = bool(Config(ALGOCONFIG_PATH).get('max-post-similarity-enabled'))
         result['post_text'] = self.max_post_sim(posts1, posts2) if max_post_enabled else self.overall_post_sim(posts1, posts2)
-        result['uclassify'] = uclassify_similarity(" ".join(posts1), " ".join(posts2))
+
+        logger.info('Evaluating uClassify topical similarity...')
+        result['uclassify'] = uclassify_similarity(" ".join(_get_post_text(posts1)), " ".join(_get_post_text(posts2)))
         return result
 
     def overall_post_sim(self, posts1, posts2):

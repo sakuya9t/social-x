@@ -1,4 +1,4 @@
-import json
+import ast
 import re
 import time
 from multiprocessing.dummy import Pool as ThreadPool
@@ -55,7 +55,7 @@ class InsUtils(AbstractParser):
         text = soup.find_all("title")[0].get_text()
         matches = re.findall(r'“(.+?)”', text)
         script_text = list(filter(lambda x: 'display_url' in x.get_text(), soup.find_all("script")))[0].get_text()
-        url_json = json.loads('{' + re.findall(r'\"display_url\":\"[^\"]*\"', script_text)[0] + '}')
+        url_json = ast.literal_eval('{' + re.findall(r'\"display_url\":\"[^\"]*\"', script_text)[0] + '}')
         image_url = re.sub('&.*', '', url_json['display_url'])
         if len(matches) == 0:
             post_text = ""
@@ -223,3 +223,12 @@ class InsUtilsWithLogin(InsUtils):
             "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(posts_urls)
         return {"profile": profile, "following": following, "posts_content": posts_content}
+
+
+def find_post_owner(url):
+    resp = requests.get(url)
+    data = resp.text
+    soup = BeautifulSoup(data)
+    text = soup.find_all("script", {"type": "application/ld+json"})[0].text
+    username = ast.literal_eval(re.sub(r'[\n ]', "", text))['author']['alternateName'].replace('@', '')
+    return username
