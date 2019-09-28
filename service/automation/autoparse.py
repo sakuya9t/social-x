@@ -12,6 +12,14 @@ PAIRING_FILE_PATH = CONFIG.get("sampler/pairing_file")
 INSTA_FOLDER = CONFIG.get("sampler/instagram_folder")
 TWITTER_FOLDER = CONFIG.get("sampler/twitter_folder")
 
+"""
+Function:
+    Automatically go through pairing file, download instagram and twitter data and save to file.
+Drawback:
+    The issue of selenium, browser not normally closed when closing instances. Have to restart 
+    service every couple days, while killing all chromedriver/chrome processes.
+"""
+
 items = []
 with open(PAIRING_FILE_PATH, "r") as file:
     while True:
@@ -44,6 +52,7 @@ for i in range(len(items)):
             continue
         logger.info('Start parsing Twitter...')
         twi_info = twi.parse(twi_account)
+        twi.close()
         if len(twi_info.keys()) == 0:
             logger.warning('Invalid Twitter account.')
             continue
