@@ -1,6 +1,7 @@
 import json
 import os
 from io import BytesIO
+import pycurl
 
 import requests
 from PIL import Image
@@ -81,6 +82,28 @@ def webimage_similarity(url1, url2):
     vec2 = img2vec.get_vec(img2)
     res['resnet18'] = cosine_similarity(vec1.reshape(1, -1), vec2.reshape(1, -1))[0][0]
     return res
+
+
+class Mrisa:
+    port = Config(CONFIG_PATH).get('mrisa/port')
+
+    def get_image_info(self, image_url):
+        data = json.dumps({"image_url": image_url})
+        url = 'http://localhost/search'
+
+        storage = BytesIO()
+        c = pycurl.Curl()
+        c.setopt(c.URL, str(url))
+        c.setopt(c.PORT, self.port)
+        c.setopt(c.HTTPHEADER, ['Content-Type: application/json'])
+        c.setopt(pycurl.POST, 1)
+        c.setopt(pycurl.POSTFIELDS, data)
+        c.setopt(c.WRITEFUNCTION, storage.write)
+        c.perform()
+        c.close()
+
+        returned_json = storage.getvalue().decode('UTF-8')
+        return json.loads(returned_json)
 
 
 if __name__ == '__main__':

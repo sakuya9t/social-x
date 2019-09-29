@@ -4,6 +4,11 @@ import os
 from utils import logger
 from utils.Couch import Couch
 
+'''
+This module imports parsed account data into couchDB.
+Will remove duplicates automatically.
+'''
+
 
 def import_file_to_db(path, db):
     with open(path, 'r') as file:
