@@ -62,7 +62,7 @@ class Sampler:
         return res
 
     def _sampleNotEqual(self, index, arr):
-        sample = random.sample(range(0, len(arr) - 1), 1)
+        sample = random.sample(arr, 1)
         if sample[0] == index:
             return self._sampleNotEqual(index, arr)
         return sample[0]

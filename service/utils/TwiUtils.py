@@ -1,12 +1,18 @@
+import requests
+from bs4 import BeautifulSoup
+
 from selenium import webdriver
 
 import selenium
 from selenium.webdriver.chrome.options import Options
 import time
 
+from utils import logger
 from utils.AbstractParser import AbstractParser
 from constant import DRIVER_PATH
 from utils.InvalidAccountException import InvalidAccountException
+
+THREAD_POOL_SIZE = 20
 
 
 class TwiUtils(AbstractParser):
@@ -19,11 +25,15 @@ class TwiUtils(AbstractParser):
         self.browser.set_window_size(1920, 1080)
 
     def isSuspended(self):
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
+        page_text = self.browser.find_element_by_tag_name("body").text
         return "Account suspended" in page_text
 
+    def notExist(self):
+        page_text = self.browser.find_element_by_tag_name("body").text
+        return "that page doesn’t exist" in page_text
+
     def isProtected(self):
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
+        page_text = self.browser.find_element_by_tag_name("body").text
         return "This account's Tweets are protected." in page_text
 
     def login(self):
@@ -39,47 +49,57 @@ class TwiUtils(AbstractParser):
         pass
 
     def parse_posts(self, username):
-        print("Parsing tweets of user: " + username)
+        logger.info("Start parsing Twitter user: " + username)
         if self.isProtected():
-            print("Account {name} is protected.".format(name=username))
+            logger.info("Twitter account {name} is protected.".format(name=username))
             return None
         if self.isSuspended():
-            print("Account {name} is suspended.".format(name=username))
+            logger.info("Twitter account {name} is suspended.".format(name=username))
+            return None
+        if self.notExist():
+            logger.info("Twitter account {name} not exist.".format(name=username))
             return None
         self.browser.get("https://www.twitter.com/" + username)
         time.sleep(3)
 
         y_offset = 0
         d_height = 0
-        post_text = set()
         err_count = 0
+        post_ids = []
         while True:
-            texts = []
             try:
-                elements = self.browser.find_elements_by_css_selector("[lang]")[1:]
-                texts = [x.text for x in elements]
-            except:
+                container = self.browser.find_element_by_class_name('stream')
+                elements = container.find_elements_by_class_name('stream-item')
+                post_ids = [x.get_attribute('id') for x in elements]
+            except Exception as ex:
                 err_count += 1
+                logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
                 time.sleep(0.5)
                 if err_count > 20:
                     pass
-            post_text.update(texts)
-            self.browser.execute_script("window.scrollBy(0,2000)")
+            self.browser.execute_script("window.scrollBy(0,20000)")
             y_pos = self.browser.execute_script("return window.pageYOffset")
             curr_height = self.browser.execute_script("return document.body.scrollHeight")
             if y_pos == y_offset and d_height == curr_height:
                 break
             d_height = curr_height
             y_offset = y_pos
-            time.sleep(0.1)
-            # print('{} tweets parsed.'.format(len(post_text)), end='\r')
-            # sys.stdout.flush()
-            if len(post_text) > 1000:
+            time.sleep(0.3)
+            if len(post_ids) > 1000:
                 break
-        return list(post_text)
+        post_ids = [x.split('-')[-1] for x in post_ids]
+        post_urls = ['https://twitter.com/{}/status/{}'.format(username, id) for id in post_ids]
+        return post_urls
 
-    def close(self):
-        self.browser.quit()
+    def get_post_content(self, url):
+        resp = requests.get(url)
+        data = resp.text
+        soup = BeautifulSoup(data)
+        desc_element = soup.find('meta', {'property': 'og:description'})
+        description = "" if not desc_element else desc_element['content']
+        images = [x['content'] for x in soup.find_all('meta', {'property': 'og:image'})]
+        images = list(filter(lambda x: 'profile_images' not in x, images))
+        return {'text': description, 'image': images}
 
 
 class TwiUtilsNoLogin(TwiUtils):
@@ -98,11 +118,12 @@ class TwiUtilsNoLogin(TwiUtils):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
         time.sleep(3)
-        if self.isSuspended() or self.isProtected():
+        if self.isSuspended() or self.notExist():
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile_card = self.browser.find_element_by_class_name("ProfileHeaderCard")
         name = profile_card.find_element_by_class_name("ProfileHeaderCard-name").text
         screen_name = profile_card.find_element_by_class_name("ProfileHeaderCard-screenname").text
+        screen_name = screen_name[1:] if screen_name[0] == '@' else screen_name
         self_desc = profile_card.find_element_by_class_name("ProfileHeaderCard-bio").text
         location = profile_card.find_element_by_class_name("ProfileHeaderCard-location").text
         conn_url = profile_card.find_element_by_class_name("ProfileHeaderCard-urlText").text
@@ -114,10 +135,16 @@ class TwiUtilsNoLogin(TwiUtils):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
         time.sleep(3)
-        if self.isSuspended() or self.isProtected():
+        if self.isSuspended() or self.notExist():
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile = self.parse_profile(username)
-        posts_content = self.parse_posts(username)
+        if self.isProtected():
+            return {"profile": profile, "posts_content": []}
+        posts_urls = self.parse_posts(username)
+        logger.info(
+            "Parse Twitter account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
+        posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
+        logger.info('Parse Twitter Account {} successful.'.format(username))
         return {"profile": profile, "posts_content": posts_content}
 
 

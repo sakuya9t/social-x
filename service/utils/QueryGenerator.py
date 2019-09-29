@@ -1,9 +1,11 @@
-from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils
+from constant import BATCH_MODE
+from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils, logger
 from utils.Couch import Couch
-from constant import REALTIME_MODE, BATCH_MODE
+from utils.InsUtils import is_valid_instagram_data
 
-PARSER = {'instagram': InsUtils.InsUtils,
-          'twitter': TwiUtils.TwiUtils,
+PARSER = {
+          'instagram': InsUtils.InsUtilsNoLogin,
+          'twitter': TwiUtils.TwiUtilsNoLogin,
           'pinterest': PinterestUtils.PinterestUtils,
           'flickr': FlickrUtils.FlickrUtils}
 
@@ -11,7 +13,7 @@ PARSER = {'instagram': InsUtils.InsUtils,
 def generate_query(account):
     try:
         db_name = account['platform'].lower()
-        username = account['account']
+        username = '@' + account['account'] if db_name == 'twitter' else account['account']
         query = {"profile": {"username": username}}
         return {"database": db_name, "selector": query}
 
@@ -23,6 +25,8 @@ def execute_query(query):
     try:
         db = Couch(db_name=query['database'])
         res = db.query(selector=query['selector'])
+        if len(res) > 1:
+            res = db.query_latest_change(query['selector'])
         db.close()
         return res
 
@@ -31,16 +35,27 @@ def execute_query(query):
 
 
 def retrieve(account, mode):
+    """
+    :param account: {'platform': xxx, 'account': yyy}
+    :param mode: BATCH_MODE || REALTIME_MODE
+    :return: JSON formatted account
+    """
     query = generate_query(account)
     db_result = execute_query(query)
     if not db_result:
-        return parse_and_insert(account, mode)
-    if mode == BATCH_MODE:
-        info = db_result[0]
-        if 'posts_content' not in info.keys():
-            delete_if_exist(account)
-            return parse_and_insert(account, mode)
-    return db_result
+        res = parse_and_insert(account, mode)[0]
+    elif mode == BATCH_MODE:
+        res = db_result[0]
+        if 'posts_content' not in res.keys():
+            if account['platform'].lower() == 'instagram' and is_valid_instagram_data(res):
+                pass
+            else:
+                delete_if_exist(account)
+                res = parse_and_insert(account, mode)[0]
+    else:
+        res = db_result[0]
+    res['platform'] = account['platform']
+    return res
 
 
 def delete_if_exist(account):
@@ -55,7 +70,8 @@ def parse_and_insert(account, mode):
     platform = account['platform'].lower()
     username = account['account']
     parser = factory(platform)
-    parse_result = parser.parse(username) if mode == BATCH_MODE else {'profile': parser.parse_profile(username)}
+    parse_result = parser.parse(username) if mode == BATCH_MODE else {'profile': parser.parse_profile(username), 'posts_content': []}
+    logger.info(parse_result)
     parser.close()
     db = Couch(db_name=platform)
     db.insert(parse_result)

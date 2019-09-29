@@ -6,6 +6,7 @@ import json
 from utils.AbstractParser import AbstractParser
 
 base_pin_url = 'https://www.pinterest.com/pin/'
+THREAD_POOL_SIZE = 20
 
 
 def get_pin_annotation(pin):
@@ -23,7 +24,7 @@ def get_pin_annotation(pin):
 
 
 def get_pin_annotation_parallel(pins):
-    pool = ThreadPool(20)
+    pool = ThreadPool(THREAD_POOL_SIZE)
     results = pool.map(get_pin_annotation, pins)
     return results
 

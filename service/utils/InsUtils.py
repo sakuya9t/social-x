@@ -1,12 +1,15 @@
+import ast
+import re
+import time
+
+import requests
 import selenium
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import time
-from bs4 import BeautifulSoup
-from multiprocessing.dummy import Pool as ThreadPool
-import requests
-import re, json
+
 from constant import DRIVER_PATH
+from utils import logger
 from utils.AbstractParser import AbstractParser
 from utils.InvalidAccountException import InvalidAccountException
 
@@ -51,22 +54,13 @@ class InsUtils(AbstractParser):
         text = soup.find_all("title")[0].get_text()
         matches = re.findall(r'“(.+?)”', text)
         script_text = list(filter(lambda x: 'display_url' in x.get_text(), soup.find_all("script")))[0].get_text()
-        url_json = json.loads('{' + re.findall(r'\"display_url\":\"[^\"]*\"', script_text)[0] + '}')
+        url_json = ast.literal_eval('{' + re.findall(r'\"display_url\":\"[^\"]*\"', script_text)[0] + '}')
         image_url = re.sub('&.*', '', url_json['display_url'])
         if len(matches) == 0:
             post_text = ""
         else:
             post_text = matches[0]
         return {"text": post_text, "image": image_url}
-
-    def multi_thread_parse(self, urls):
-        pool = ThreadPool(10)
-        results = pool.map(self.get_post_content, urls)
-        return results
-
-    def close(self):
-        self.browser.stop_client()
-        self.browser.close()
 
 
 class InsUtilsNoLogin(InsUtils):
@@ -85,10 +79,10 @@ class InsUtilsNoLogin(InsUtils):
             desc_str = desc_div.get_attribute("innerText")
             desc_str = desc_str.replace("\n", ";;")
             if is_private:
-                print("User " + screen_name + " is a private account.")
+                logger.info("Instagram user " + screen_name + " is a private account.")
                 return {"username": screen_name, "status": "PRIVATE", "description": desc_str, "image": profile_img}
             if is_empty_account:
-                print("User " + screen_name + " is an empty account.")
+                logger.info("Instagram user " + screen_name + " is an empty account.")
                 return {"username": screen_name, "status": "EMPTY", "description": desc_str, "image": profile_img}
             time.sleep(3)
 
@@ -96,19 +90,21 @@ class InsUtilsNoLogin(InsUtils):
         except InvalidAccountException as ex:
             raise ex
         except Exception as ex:
-            print(str(ex))
+            logger.error(str(ex))
             return "INVALID"
 
     def parse(self, username):
         profile = self.parse_profile(username)
         if profile == 'INVALID':
             raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
-        print("Parse profile succeed.")
+        logger.info("Parse Instagram profile {} succeed.".format(username))
         if "status" in profile.keys() and profile["status"] in ["PRIVATE", "EMPTY"]:
             return {"profile": profile, "posts_content": []}
         posts_urls = self.parse_posts()
-        print("Parse posts url succeed, " + str(len(posts_urls)) + " posts.")
-        posts_content = self.multi_thread_parse(posts_urls)
+        logger.info(
+            "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
+        posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
+        logger.info('Parse Instagram Account {} successful.'.format(username))
         return {"profile": profile, "posts_content": posts_content}
 
 
@@ -147,24 +143,24 @@ class InsUtilsWithLogin(InsUtils):
             desc_str = desc_div.get_attribute("innerText")
             desc_str = desc_str.replace("\n", ";;")
             if is_private:
-                print("User " + screen_name + " is a private account.")
+                logger.info("Instagram user " + screen_name + " is a private account.")
                 return {"username": screen_name, "status": "PRIVATE", "description": desc_str, "image": profile_img}
             if is_empty_account:
-                print("User " + screen_name + " is an empty account.")
+                logger.info("Instagram user " + screen_name + " is an empty account.")
                 return {"username": screen_name, "status": "EMPTY", "description": desc_str, "image": profile_img}
             following_btn = self.browser.find_element_by_css_selector("[href=\"/" + screen_name + "/following/\"]")
             following_num = self.turn_num(following_btn.find_elements_by_tag_name("span")[0].get_attribute("innerText"))
             follower_btn = self.browser.find_element_by_css_selector("[href=\"/" + screen_name + "/followers/\"]")
             follower_num = self.turn_num(follower_btn.find_elements_by_tag_name("span")[0].get_attribute("innerText"))
-            # print("Following: " + str(following_num) + ", Followers: " + str(follower_num))
             following_btn.click()
             time.sleep(3)
 
-            return {"username": screen_name, "following": following_num, "follower": follower_num, "description": desc_str, "image": profile_img}
+            return {"username": screen_name, "following": following_num, "follower": follower_num,
+                    "description": desc_str, "image": profile_img}
         except InvalidAccountException as ex:
             raise ex
         except Exception as ex:
-            print(str(ex))
+            logger.error(str(ex))
             return "INVALID"
 
     def parse_network(self):
@@ -207,12 +203,29 @@ class InsUtilsWithLogin(InsUtils):
         profile = self.parse_profile(username)
         if profile == 'INVALID':
             raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
-        print("Parse profile succeed.")
+        logger.info("Parse Instagram profile {} succeed.".format(username))
         if "status" in profile.keys() and profile["status"] == "PRIVATE":
             return {'profile': profile, "posts_content": []}
         following = self.parse_network()
-        print("Parse following succeed, " + str(len(following)) + " followings.")
+        logger.info(
+            "Parse Instagram account {} following succeed, ".format(username) + str(len(following)) + " followings.")
         posts_urls = self.parse_posts()
-        print("Parse posts url succeed, " + str(len(posts_urls)) + " posts.")
-        posts_content = self.multi_thread_parse(posts_urls)
+        logger.info(
+            "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
+        posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
         return {"profile": profile, "following": following, "posts_content": posts_content}
+
+
+def find_post_owner(url):
+    resp = requests.get(url)
+    data = resp.text
+    soup = BeautifulSoup(data)
+    text = soup.find_all("script", {"type": "application/ld+json"})[0].text
+    username = ast.literal_eval(re.sub(r'[\n ]', "", text))['author']['alternateName'].replace('@', '')
+    return username
+
+
+def is_valid_instagram_data(content):
+    if 'posts_content' not in content.keys():
+        return 'profile' in content.keys() and 'status' in content['profile'].keys()
+    return True

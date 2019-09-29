@@ -1,10 +1,10 @@
 from cloudant.client import CouchDB
 from cloudant.database import CloudantDatabase
-from cloudant.document import Document
 from cloudant.database import CouchDatabase
+from cloudant.document import Document
 
-from similarity.Config import Config
 from constant import CONFIG_PATH
+from similarity.Config import Config
 
 
 class Couch:
@@ -100,3 +100,35 @@ class Couch:
             doc = Document(self.db, id)
             doc['_rev'] = rev
             doc.delete()
+
+    def query_latest_change(self, selector):
+        """
+        Query latest item sorted by timestamp. Returns only timestamp in documents.
+        :param selector: dictionary
+        :return: a list that contains 1 or 0 docs
+        """
+        q_res = self.query(selector)
+        q_res = list(filter(lambda x: 'timestamp' in x.keys(), q_res))
+        res = sorted(q_res, key=lambda x: x['timestamp'])
+        return res[-1:]
+
+
+def _convert_float(obj):
+    for key, value in obj.items():
+        if isinstance(value, float):
+            obj[key] = str(value)
+        elif isinstance(value, dict):
+            obj[key] = _convert_float(value)
+    return obj
+
+
+def _restore_float(obj):
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            obj[key] = _restore_float(value)
+        else:
+            try:
+                obj[key] = float(value)
+            except ValueError:
+                pass
+    return obj
