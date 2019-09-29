@@ -87,7 +87,6 @@ class TwiUtils(AbstractParser):
             time.sleep(0.3)
             if len(post_ids) > 1000:
                 break
-            logger.info("{} tweets parsed.".format(len(post_ids)))
         post_ids = [x.split('-')[-1] for x in post_ids]
         post_urls = ['https://twitter.com/{}/status/{}'.format(username, id) for id in post_ids]
         return post_urls
@@ -122,7 +121,7 @@ class TwiUtilsNoLogin(TwiUtils):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
         time.sleep(3)
-        if self.isSuspended() or self.isProtected() or self.notExist():
+        if self.isSuspended() or self.notExist():
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile_card = self.browser.find_element_by_class_name("ProfileHeaderCard")
         name = profile_card.find_element_by_class_name("ProfileHeaderCard-name").text
@@ -139,11 +138,16 @@ class TwiUtilsNoLogin(TwiUtils):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
         time.sleep(3)
-        if self.isSuspended() or self.isProtected():
+        if self.isSuspended() or self.notExist():
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile = self.parse_profile(username)
+        if self.isProtected():
+            return {"profile": profile, "posts_content": []}
         posts_urls = self.parse_posts(username)
+        logger.info(
+            "Parse Twitter account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
+        logger.info('Parse Twitter Account {} successful.'.format(username))
         return {"profile": profile, "posts_content": posts_content}
 
 

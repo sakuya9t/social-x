@@ -18,6 +18,12 @@ class TwiUtilsTests(unittest.TestCase):
         content = u.get_post_content(url)
         self.assertTrue('text' in content.keys() and 'image' in content.keys())
 
+    def test_parse_protect(self):
+        u = TwiUtilsNoLogin()
+        info = u.parse('YG_iKONph')
+        u.close()
+        print(info)
+
 
 if __name__ == '__main__':
     unittest.main()

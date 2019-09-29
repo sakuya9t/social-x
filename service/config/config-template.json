@@ -27,7 +27,7 @@
     ]
   },
   "uclassify": {
-    "apikey": ""
+    "apikey": []
   },
   "sampler": {
     "mode": "",

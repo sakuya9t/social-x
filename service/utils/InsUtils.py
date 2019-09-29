@@ -108,6 +108,7 @@ class InsUtilsNoLogin(InsUtils):
         logger.info(
             "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
+        logger.info('Parse Instagram Account {} successful.'.format(username))
         return {"profile": profile, "posts_content": posts_content}
 
 

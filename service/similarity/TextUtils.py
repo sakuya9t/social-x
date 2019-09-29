@@ -134,16 +134,23 @@ def uclassify_similarity(text1, text2):
 
 def uclassify_topics(text):
     try:
-        key = Config(CONFIG_PATH).get('uclassify/apikey')
+        keys = Config(CONFIG_PATH).get('uclassify/apikey')
         url = 'https://api.uclassify.com/v1/uClassify/Topics/classify'
-        header = {'Authorization': 'Token {}'.format(key), 'Content-Type': 'application/json'}
         data = {'texts': [text]}
-        response = requests.post(url=url, data=json.dumps(data), headers=header)
-        resp_data = ast.literal_eval(response.text)[0]['classification']
-        res = {x['className']: x['p'] for x in resp_data}
-        return res
+        for key in keys:
+            header = {'Authorization': 'Token {}'.format(key), 'Content-Type': 'application/json'}
+            response = requests.post(url=url, data=json.dumps(data), headers=header)
+            if response.status_code == 200:
+                resp_data = ast.literal_eval(response.text)[0]['classification']
+                res = {x['className']: x['p'] for x in resp_data}
+                return res
+        raise UclassifyKeyExceedException('All uClassify keys daily usage exceed.')
     except Exception as ex:
         logger.error('Error when uClassifying text: {}'.format(ex))
+
+
+class UclassifyKeyExceedException(BaseException):
+    pass
 
 
 def intersection(lst1, lst2):
