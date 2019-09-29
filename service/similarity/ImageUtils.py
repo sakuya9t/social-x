@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from io import BytesIO
 import pycurl
 
@@ -93,8 +94,12 @@ class Mrisa:
     proc = None
 
     def start(self):
-        self.proc = subprocess.Popen(['python3', self.service, '--port', str(self.port)])
-        logger.info('MRISA service started at port {}.'.format(self.port))
+        try:
+            self.proc = subprocess.Popen(['python3', self.service, '--port', str(self.port)])
+            time.sleep(3)
+            logger.info('MRISA service started at port {}.'.format(self.port))
+        except Exception as ex:
+            logger.error('Error occured when starting MRISA: {}'.format(ex))
 
     def get_image_info(self, image_url):
         data = json.dumps({"image_url": image_url})
@@ -115,8 +120,11 @@ class Mrisa:
         return json.loads(returned_json)
 
     def stop(self):
-        while self.proc.poll():
-            self.proc.kill()
+        logger.info('Terminating process pid: {}'.format(self.proc.pid))
+        self.proc.terminate()
+        self.proc.kill()
+        time.sleep(1)
+        os.system('kill -9 {}'.format(self.proc.pid))
         logger.info('MRISA service stopped.')
 
 
