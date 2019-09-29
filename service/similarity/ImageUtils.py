@@ -11,6 +11,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 from similarity.img_to_vec import Img2Vec
 from similarity.Config import Config
 from constant import CONFIG_PATH
+import subprocess
+
+from utils import logger
 
 
 class MSFaceService:
@@ -86,6 +89,12 @@ def webimage_similarity(url1, url2):
 
 class Mrisa:
     port = Config(CONFIG_PATH).get('mrisa/port')
+    service = Config(CONFIG_PATH).get('mrisa/server-path')
+    proc = None
+
+    def start(self):
+        self.proc = subprocess.Popen(['python3', self.service, '--port', str(self.port)])
+        logger.info('MRISA service started at port {}.'.format(self.port))
 
     def get_image_info(self, image_url):
         data = json.dumps({"image_url": image_url})
@@ -104,6 +113,11 @@ class Mrisa:
 
         returned_json = storage.getvalue().decode('UTF-8')
         return json.loads(returned_json)
+
+    def stop(self):
+        while self.proc.poll():
+            self.proc.kill()
+        logger.info('MRISA service stopped.')
 
 
 if __name__ == '__main__':

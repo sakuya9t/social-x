@@ -20,11 +20,15 @@ class TwiUtils(AbstractParser):
         self.browser.set_window_size(1920, 1080)
 
     def isSuspended(self):
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
+        page_text = self.browser.find_element_by_tag_name("body").text
         return "Account suspended" in page_text
 
+    def notExist(self):
+        page_text = self.browser.find_element_by_tag_name("body").text
+        return "that page doesn’t exist" in page_text
+
     def isProtected(self):
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
+        page_text = self.browser.find_element_by_tag_name("body").text
         return "This account's Tweets are protected." in page_text
 
     def login(self):
@@ -53,18 +57,24 @@ class TwiUtils(AbstractParser):
         y_offset = 0
         d_height = 0
         post_text = set()
+        post_images = set()
         err_count = 0
         while True:
             texts = []
+            image_urls = []
             try:
                 elements = self.browser.find_elements_by_css_selector("[lang]")[1:]
+                image_elements = self.browser.find_elements_by_class_name("AdaptiveMedia-photoContainer")
+                image_urls = [x.find_element_by_tag_name("img").get_attribute("src") for x in image_elements]
                 texts = [x.text for x in elements]
-            except:
+            except Exception as ex:
                 err_count += 1
+                logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
                 time.sleep(0.5)
                 if err_count > 20:
                     pass
             post_text.update(texts)
+            post_images.update(image_urls)
             self.browser.execute_script("window.scrollBy(0,2000)")
             y_pos = self.browser.execute_script("return window.pageYOffset")
             curr_height = self.browser.execute_script("return document.body.scrollHeight")
@@ -75,8 +85,9 @@ class TwiUtils(AbstractParser):
             time.sleep(0.1)
             if len(post_text) > 1000:
                 break
-        logger.info("{} tweets parsed.".format(len(post_text)))
-        return list(post_text)
+            logger.info("{} tweets parsed.".format(len(post_text)))
+        logger.info("{} tweets parsed, {} images parsed.".format(len(post_text), len(post_images)))
+        return {"text": list(post_text), "images": list(post_images)}
 
     def close(self):
         self.browser.quit()
@@ -98,7 +109,7 @@ class TwiUtilsNoLogin(TwiUtils):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
         time.sleep(3)
-        if self.isSuspended() or self.isProtected():
+        if self.isSuspended() or self.isProtected() or self.notExist():
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile_card = self.browser.find_element_by_class_name("ProfileHeaderCard")
         name = profile_card.find_element_by_class_name("ProfileHeaderCard-name").text
