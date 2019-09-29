@@ -1,62 +1,108 @@
-import selenium
+import requests
+from bs4 import BeautifulSoup
+
 from selenium import webdriver
 
 import selenium
 from selenium.webdriver.chrome.options import Options
 import time
-import sys
 
-class TwiUtils:
-    def __init__(self, login):
-        if login:
-            self.twitter = TwiUtilsWithLogin()
-        else:
-            self.twitter = TwiUtilsNoLogin()
-            
-    def isSuspended(self, username):
-        return self.twitter.isSuspended(username)
-    
-    def isProtected(self, username):
-        return self.twitter.isProtected(username)
-    
-    def getPhoto(self, username):
-        return self.twitter.getPhoto(username)
-        
-    def parse_profile(self, username):
-        return self.twitter.parse_profile(username)
-        
-    def parse(self, username):
-        return self.twitter.parse(username)
-        
-    def parse_posts(self, username):
-        return self.twitter.parse_posts(username)
-        
-    def close(self):
-        self.twitter.close()
+from utils import logger
+from utils.AbstractParser import AbstractParser
+from constant import DRIVER_PATH
+from utils.InvalidAccountException import InvalidAccountException
 
-class TwiUtilsNoLogin:
+THREAD_POOL_SIZE = 20
 
-    def __init__(self):
+
+class TwiUtils(AbstractParser):
+    def __init__(self, displayed=False):
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome('./chromedriver', options=chrome_options)
+        if not displayed:
+            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--disable-gpu')
+        self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
         self.browser.set_window_size(1920, 1080)
-        
-    def isSuspended(self, username):
-        url = "https://www.twitter.com/" + username
-        self.browser.get(url)
-        time.sleep(3)
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
+
+    def isSuspended(self):
+        page_text = self.browser.find_element_by_tag_name("body").text
         return "Account suspended" in page_text
-    
-    def isProtected(self, username):
-        url = "https://www.twitter.com/" + username
-        self.browser.get(url)
-        time.sleep(3)
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
+
+    def notExist(self):
+        page_text = self.browser.find_element_by_tag_name("body").text
+        return "that page doesn’t exist" in page_text
+
+    def isProtected(self):
+        page_text = self.browser.find_element_by_tag_name("body").text
         return "This account's Tweets are protected." in page_text
-    
+
+    def login(self):
+        pass
+
+    def getPhoto(self, username):
+        pass
+
+    def parse_profile(self, username):
+        pass
+
+    def parse(self, username):
+        pass
+
+    def parse_posts(self, username):
+        logger.info("Start parsing Twitter user: " + username)
+        if self.isProtected():
+            logger.info("Twitter account {name} is protected.".format(name=username))
+            return None
+        if self.isSuspended():
+            logger.info("Twitter account {name} is suspended.".format(name=username))
+            return None
+        if self.notExist():
+            logger.info("Twitter account {name} not exist.".format(name=username))
+            return None
+        self.browser.get("https://www.twitter.com/" + username)
+        time.sleep(3)
+
+        y_offset = 0
+        d_height = 0
+        err_count = 0
+        post_ids = []
+        while True:
+            try:
+                container = self.browser.find_element_by_class_name('stream')
+                elements = container.find_elements_by_class_name('stream-item')
+                post_ids = [x.get_attribute('id') for x in elements]
+            except Exception as ex:
+                err_count += 1
+                logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
+                time.sleep(0.5)
+                if err_count > 20:
+                    pass
+            self.browser.execute_script("window.scrollBy(0,20000)")
+            y_pos = self.browser.execute_script("return window.pageYOffset")
+            curr_height = self.browser.execute_script("return document.body.scrollHeight")
+            if y_pos == y_offset and d_height == curr_height:
+                break
+            d_height = curr_height
+            y_offset = y_pos
+            time.sleep(0.3)
+            if len(post_ids) > 1000:
+                break
+        post_ids = [x.split('-')[-1] for x in post_ids]
+        post_urls = ['https://twitter.com/{}/status/{}'.format(username, id) for id in post_ids]
+        return post_urls
+
+    def get_post_content(self, url):
+        resp = requests.get(url)
+        data = resp.text
+        soup = BeautifulSoup(data)
+        desc_element = soup.find('meta', {'property': 'og:description'})
+        description = "" if not desc_element else desc_element['content']
+        images = [x['content'] for x in soup.find_all('meta', {'property': 'og:image'})]
+        images = list(filter(lambda x: 'profile_images' not in x, images))
+        return {'text': description, 'image': images}
+
+
+class TwiUtilsNoLogin(TwiUtils):
     def getPhoto(self, username):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
@@ -67,79 +113,45 @@ class TwiUtilsNoLogin:
             return img_url
         except:
             return ""
-        
+
     def parse_profile(self, username):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
         time.sleep(3)
+        if self.isSuspended() or self.notExist():
+            raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile_card = self.browser.find_element_by_class_name("ProfileHeaderCard")
         name = profile_card.find_element_by_class_name("ProfileHeaderCard-name").text
         screen_name = profile_card.find_element_by_class_name("ProfileHeaderCard-screenname").text
+        screen_name = screen_name[1:] if screen_name[0] == '@' else screen_name
         self_desc = profile_card.find_element_by_class_name("ProfileHeaderCard-bio").text
         location = profile_card.find_element_by_class_name("ProfileHeaderCard-location").text
         conn_url = profile_card.find_element_by_class_name("ProfileHeaderCard-urlText").text
         profile_img = self.browser.find_element_by_class_name("ProfileAvatar-image").get_attribute("src")
-        return {"username": screen_name, "name": name, "description": self_desc, "location": location, "url": conn_url, "image": profile_img}
-        
+        return {"username": screen_name, "name": name, "description": self_desc, "location": location, "url": conn_url,
+                "image": profile_img}
+
     def parse(self, username):
-        if self.isSuspended(username):
-            return {}
-        profile = self.parse_profile(username)
-        posts_content = self.parse_posts(username)
-        return {"profile": profile, "posts_content": posts_content}
-    
-    def parse_posts(self, username):
-        print("Parsing tweets of user: " + username)
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
-        if "This account's Tweets are protected." in page_text:
-            print("Account {name} is protected.".format(name=username))
-            return []
-        self.browser.get("https://www.twitter.com/" + username)
+        url = "https://www.twitter.com/" + username
+        self.browser.get(url)
         time.sleep(3)
-        
-        y_offset = 0
-        d_height = 0
-        post_text = set()
-        while True:
-            try:
-                elements = self.browser.find_elements_by_css_selector("[lang]")[1:]
-                texts = [x.text for x in elements]
-            except:
-                time.sleep(0.5)
-                continue
-            post_text.update(texts)
-            self.browser.execute_script("window.scrollBy(0,2000)")
-            y_pos = self.browser.execute_script("return window.pageYOffset")
-            curr_height = self.browser.execute_script("return document.body.scrollHeight")
-            if y_pos == y_offset and d_height == curr_height:
-                break
-            d_height = curr_height
-            y_offset = y_pos
-            time.sleep(0.1)
-            print('{} tweets parsed.'.format(len(post_text)), end='\r')
-            sys.stdout.flush()
-            if len(post_text) > 1000:
-                break
-        return list(post_text)
-    
-    def close(self):
-        self.browser.stop_client()
-        self.browser.close()
+        if self.isSuspended() or self.notExist():
+            raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
+        profile = self.parse_profile(username)
+        if self.isProtected():
+            return {"profile": profile, "posts_content": []}
+        posts_urls = self.parse_posts(username)
+        logger.info(
+            "Parse Twitter account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
+        posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
+        logger.info('Parse Twitter Account {} successful.'.format(username))
+        return {"profile": profile, "posts_content": posts_content}
 
 
-class TwiUtilsWithLogin:
-
-    def __init__(self, displayed):
-        chrome_options = Options()
-        if not displayed:
-            chrome_options.add_argument('--headless')
-            chrome_options.add_argument('--disable-gpu')
-        self.browser = selenium.webdriver.Chrome('./chromedriver', options=chrome_options)
-        self.browser.set_window_size(1920, 1080)
-
+class TwiUtilsWithLogin(TwiUtils):
     def set_account(self, account):
         self.account = account
-        
+
     def login(self):
         self.browser.get("https://twitter.com/login")
         time.sleep(3)
@@ -151,14 +163,7 @@ class TwiUtilsWithLogin:
         submit_button.click()
         time.sleep(3)
         return "login" not in self.browser.current_url
-        
-    def isSuspended(self, username):
-        url = "https://www.twitter.com/" + username
-        self.browser.get(url)
-        time.sleep(3)
-        page_text = self.browser.find_elements_by_tag_name("body")[0].text
-        return "Account suspended" in page_text
-    
+
     def getPhoto(self, username):
         url = "https://www.twitter.com/" + username
         self.browser.get(url)
@@ -170,42 +175,3 @@ class TwiUtilsWithLogin:
             return img_url
         except:
             return ""
-        
-    def parse_posts(self, username):
-        print("Parsing tweets of user: " + username)
-        self.browser.get("https://www.twitter.com/" + username)
-        time.sleep(3)
-        
-        y_offset = 0
-        d_height = 0
-        post_text = set()
-        err_count = 0
-        while True:
-            try:
-                elements = self.browser.find_elements_by_css_selector("[lang]")[1:]
-                texts = [x.text for x in elements]
-                err_count = 0
-            except:
-                err_count += 1
-                time.sleep(0.5)
-                if(err_count > 20):
-                    break
-                continue
-            post_text.update(texts)
-            self.browser.execute_script("window.scrollBy(0,2000)")
-            y_pos = self.browser.execute_script("return window.pageYOffset")
-            curr_height = self.browser.execute_script("return document.body.scrollHeight")
-            if y_pos == y_offset and d_height == curr_height:
-                break
-            d_height = curr_height
-            y_offset = y_pos
-            time.sleep(0.1)
-            print('{} tweets parsed.'.format(len(post_text)), end='\r')
-            sys.stdout.flush()
-            if len(post_text) > 1000:
-                break
-        return list(post_text)
-    
-    def close(self):
-        self.browser.stop_client()
-        self.browser.close()

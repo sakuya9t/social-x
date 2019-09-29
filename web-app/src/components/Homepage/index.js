@@ -25,6 +25,7 @@ class Homepage extends Component{
             displayLoginWindow: false,
             displayLoginPlatforms: [],
             result: {},
+            resultId: null,
             waitingResult: false,
             showResult: false
         }
@@ -70,16 +71,16 @@ class Homepage extends Component{
 
         // test data for ui
         let resdata = {
-            account1: data.account1,
-            account2: data.account2,
-            similarity: 1.0
+            doc_id: '5bea4d3efa3646879',
+            result: 1.0
         };
         // test data for ui end
 
         this.setState({
             ...this.state,
-            result: resdata,
-            showResult: true
+            result: resdata.result,
+            showResult: true,
+            resultId: resdata.doc_id
         });
 
         animateScroll.scrollToBottom();

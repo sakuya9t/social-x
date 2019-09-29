@@ -1,19 +1,19 @@
 import re
 import string
+import warnings
+
+import numpy as np
 import textdistance
-from nltk.corpus import wordnet
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.corpus import wordnet
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
-from collections import Counter
+from nltk.tokenize import word_tokenize
+from urlextract import URLExtract
 
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+warnings.filterwarnings('ignore', category=FutureWarning)
 import tensorflow as tf
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 import tensorflow_hub as hub
-import numpy as np
 
 
 class TensorSimilarity:
@@ -23,12 +23,13 @@ class TensorSimilarity:
     def initialize(self):
         module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
         embed = hub.Module(module_url)
-        self.session = tf.Session()
-        self.session.run([tf.global_variables_initializer(), tf.tables_initializer()])
-        self.similarity_input_placeholder = tf.placeholder(tf.string, shape=(None))
+        self.session = tf.compat.v1.Session()
+        self.session.run([tf.compat.v1.global_variables_initializer(), tf.compat.v1.tables_initializer()])
+        self.similarity_input_placeholder = tf.compat.v1.placeholder(tf.string, shape=None)
         self.similarity_message_encodings = embed(self.similarity_input_placeholder)
 
     def similarity(self, msg1, msg2):
+        # GUSE similarity
         messages = (msg1, msg2)
         message_embeddings = self.session.run(
             self.similarity_message_encodings, feed_dict={self.similarity_input_placeholder: messages})
@@ -48,9 +49,9 @@ def initialize():
 
 def tokenize(text):
     text = text.lower()
-    text = re.sub(r'https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'https?://.*[\r\n]*', '', text, flags=re.MULTILINE)
     text = re.sub(r'\d+', '', text)
-    text = re.sub(r'[^\x00-\x7F]','', text)
+    text = re.sub(r'[^\x00-\x7F]', '', text)
     text = text.translate(str.maketrans('', '', string.punctuation))
     text = text.strip()
     tokens = word_tokenize(text)
@@ -73,6 +74,20 @@ def similarity(str1, str2, type):
     elif type == 'sorensen':
         return textdistance.sorensen_dice(tokens_1, tokens_2)
     return 0
+
+
+def singleword_similarity(profile1, profile2):
+    keys = ['username', 'name', 'screen_name', 'full_name']
+    res = -1
+    for key1 in keys:
+        for key2 in keys:
+            if key1 in profile1.keys() and key2 in profile2.keys():
+                w1 = profile1[key1]
+                w2 = profile2[key2]
+                w1 = w1[1:] if w1[0] == '@' else w1
+                w2 = w2[1:] if w2[0] == '@' else w2
+                res = max(res, textdistance.levenshtein.normalized_similarity(w1, w2))
+    return res
 
 
 def topics_in_posts(posts):
@@ -98,6 +113,31 @@ def jaccard_counter_similarity(counter1, counter2):
     intersection = sum((counter1 & counter2).values())
     union = sum((counter1 | counter2).values())
     return 0 if union == 0 else intersection / union
+
+
+def intersection(lst1, lst2):
+    return set(lst1).intersection(lst2)
+
+
+def extract_urls(text):
+    return [re.sub(r'https?//', '', x.lower()) for x in URLExtract().find_urls(text)]
+
+
+def _get_default_url(platform, username):
+    if platform in ['instagram', 'twitter', 'pinterest']:
+        return [x.lower() for x in ['{}.com/{}'.format(platform, username), 'www.{}.com/{}'.format(platform, username),
+                '{}.com/{}/'.format(platform, username), 'www.{}.com/{}/'.format(platform, username)]]
+    elif platform == 'flickr':
+        return [x.lower() for x in ['flickr.com/people/{}'.format(username), 'www.flickr.com/people/{}'.format(username),
+                'flickr.com/people/{}/'.format(username), 'www.flickr.com/people/{}/'.format(username)]]
+
+
+def desc_overlap_url(info1, info2):
+    url_1 = extract_urls(info1['desc'])
+    url_2 = extract_urls(info2['desc'])
+    url_1 += _get_default_url(info1['platform'], info1['username'])
+    url_2 += _get_default_url(info2['platform'], info2['username'])
+    return 1 if len(intersection(url_1, url_2)) > 0 else 0
 
 
 if __name__ == '__main__':

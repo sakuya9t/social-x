@@ -8,12 +8,13 @@ from bs4 import BeautifulSoup
 import requests
 from multiprocessing.dummy import Pool as ThreadPool
 from constant import DRIVER_PATH
+from utils.AbstractParser import AbstractParser
 
 
-class FlickrUtils:
-    def __init__(self, showbrowser):
+class FlickrUtils(AbstractParser):
+    def __init__(self, displayed=False):
         chrome_options = Options()
-        if not showbrowser:
+        if not displayed:
             chrome_options.add_argument('--headless')
             chrome_options.add_argument('--disable-gpu')
         self.browser = selenium.webdriver.Chrome(DRIVER_PATH, options=chrome_options)
@@ -29,8 +30,8 @@ class FlickrUtils:
 
     def parse(self, username):
         self.set_user(username)
-        profile = self.parse_profile()
-        posts = self.multi_thread_parse(self.parse_image_urls())
+        profile = self.parse_profile(username)
+        posts = self.multi_thread_parse(callback=self.get_post_content, urls=self.parse_image_urls())
         following = self.get_followings()
         groups = self.get_user_groups()
         return {"profile": profile, "posts_content": posts, "following": following, "groups": groups}
@@ -59,11 +60,6 @@ class FlickrUtils:
             has_more = self.next_page()
         return image_urls
 
-    def multi_thread_parse(self, urls):
-        pool = ThreadPool(20)
-        results = pool.map(self.get_post_content, urls)
-        return results
-
     def get_post_content(self, url):
         resp = requests.get(url)
         data = resp.text
@@ -88,8 +84,9 @@ class FlickrUtils:
                 break
         return following_ids
 
-    def parse_profile(self):
-        profile = {}
+    def parse_profile(self, username):
+        self.set_user(username)
+        profile = {'username': username}
         resp = requests.get(self.base_url + self.links['about'])
         data = resp.text
         soup = BeautifulSoup(data)
@@ -111,6 +108,3 @@ class FlickrUtils:
         trs = self.browser.find_element_by_class_name("main").find_elements_by_tag_name("tr")[1:]
         group_names = [x.find_element_by_css_selector("td:nth-child(1)").find_element_by_tag_name("a").text for x in trs]
         return group_names
-    
-    def close(self):
-        self.browser.quit()

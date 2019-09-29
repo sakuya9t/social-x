@@ -8,9 +8,9 @@ from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
 import json
 
-from utils.QueryGenerator import generate_query, execute_query
+from utils.QueryGenerator import retrieve
 from utils.TwiUtils import TwiUtilsWithLogin
-from constant import CONFIG_PATH
+from constant import REALTIME_MODE, DATABASE_QUERY_RESULT, DATABASE_FEEDBACK, DATABASE_CREDENTIAL
 
 app = Flask(__name__)
 CORS(app)
@@ -48,21 +48,50 @@ def login_account():
     instance.set_account((username, password))
     res = instance.login()
     if res:
-        database = Couch(CONFIG_PATH, 'credential')
+        database = Couch(DATABASE_CREDENTIAL)
         database.insert(data)
+        database.close()
 
     return make_response({'result': res})
 
 
 @app.route('/query', methods=["POST"])
 def query():
+    """
+        Request format:
+            {'account1': {'platform':'xxx', 'account': 'aaa'}, 'account2': {'platform':'yyy', 'account': 'bbb'}}
+        Response format:
+            {'result': 0.123, 'doc_id': '5bea4d3efa3646879'}
+    """
     data = json.loads(request.get_data())
     account1 = data['account1']
     account2 = data['account2']
-    info1 = retrieve(account1)
-    info2 = retrieve(account2)
-    res = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']))
-    return make_response({'result': res})
+    score = algoModule.find_existing(account1, account2)
+    if len(score) == 0:
+        info1 = retrieve(account1, mode=REALTIME_MODE)
+        info2 = retrieve(account2, mode=REALTIME_MODE)
+        score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
+                            mode=REALTIME_MODE)
+        db = Couch(DATABASE_QUERY_RESULT)
+        db.insert({'query': data, 'result': score})
+        db.close()
+
+    return make_response({'result': score, 'doc_id': doc_id})
+
+
+@app.route('/feedback', methods=["POST"])
+def feedback():
+    """
+        Request format:
+            {'doc_id': '5bea4d3efa3646879', 'feedback': 0}
+        Response format:
+            {'result': 'ok'}
+    """
+    data = json.loads(request.get_data())
+    db = Couch(DATABASE_FEEDBACK)
+    db.insert(data)
+    db.close()
+    return make_response({'result': 'ok'})
 
 
 @app.route('/decrypt', methods=["POST"])
@@ -71,12 +100,6 @@ def decrypt_api():
     data = json.loads(data)
     message = data['message']
     return decrypt(message)
-
-
-def retrieve(account):
-    query = generate_query(account)
-    result = execute_query(query)
-    return result
 
 
 def make_response(q_res):
