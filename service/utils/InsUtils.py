@@ -62,10 +62,6 @@ class InsUtils(AbstractParser):
             post_text = matches[0]
         return {"text": post_text, "image": image_url}
 
-    def close(self):
-        self.browser.stop_client()
-        self.browser.close()
-
 
 class InsUtilsNoLogin(InsUtils):
     def parse_profile(self, username):

@@ -108,6 +108,3 @@ class FlickrUtils(AbstractParser):
         trs = self.browser.find_element_by_class_name("main").find_elements_by_tag_name("tr")[1:]
         group_names = [x.find_element_by_css_selector("td:nth-child(1)").find_element_by_tag_name("a").text for x in trs]
         return group_names
-    
-    def close(self):
-        self.browser.quit()

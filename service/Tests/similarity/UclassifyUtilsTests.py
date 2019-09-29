@@ -2,7 +2,7 @@ import unittest
 from collections import Counter
 
 from similarity.TextUtils import jaccard_counter_similarity, singleword_similarity, desc_overlap_url
-from similarity.UclassifyUtils import uclassify_topics, uclassify_similarity
+from similarity.UclassifyUtils import uclassify_topics, uclassify_similarity, generate_uclassify_key
 
 
 class UclassifyUtilsTests(unittest.TestCase):
@@ -16,6 +16,10 @@ class UclassifyUtilsTests(unittest.TestCase):
         text2 = 'Before getting started, you may want to find out which IDEs and text editors are tailored to make Python editing easy, browse the list of introductory books, or look at code samples that you might find helpful.'
         score = uclassify_similarity(text1, text2)
         self.assertTrue(0 <= score <= 1)
+
+    def test_generate_key(self):
+        api_key = generate_uclassify_key()
+        self.assertTrue(isinstance(api_key, str))
 
 
 if __name__ == '__main__':

@@ -101,9 +101,6 @@ class TwiUtils(AbstractParser):
         images = list(filter(lambda x: 'profile_images' not in x, images))
         return {'text': description, 'image': images}
 
-    def close(self):
-        self.browser.quit()
-
 
 class TwiUtilsNoLogin(TwiUtils):
     def getPhoto(self, username):
