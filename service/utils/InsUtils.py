@@ -1,7 +1,6 @@
 import ast
 import re
 import time
-from multiprocessing.dummy import Pool as ThreadPool
 
 import requests
 import selenium
@@ -63,11 +62,6 @@ class InsUtils(AbstractParser):
             post_text = matches[0]
         return {"text": post_text, "image": image_url}
 
-    def multi_thread_parse(self, urls):
-        pool = ThreadPool(10)
-        results = pool.map(self.get_post_content, urls)
-        return results
-
     def close(self):
         self.browser.stop_client()
         self.browser.close()
@@ -113,7 +107,7 @@ class InsUtilsNoLogin(InsUtils):
         posts_urls = self.parse_posts()
         logger.info(
             "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
-        posts_content = self.multi_thread_parse(posts_urls)
+        posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
         return {"profile": profile, "posts_content": posts_content}
 
 
@@ -221,7 +215,7 @@ class InsUtilsWithLogin(InsUtils):
         posts_urls = self.parse_posts()
         logger.info(
             "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
-        posts_content = self.multi_thread_parse(posts_urls)
+        posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
         return {"profile": profile, "following": following, "posts_content": posts_content}
 
 

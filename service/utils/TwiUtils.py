@@ -1,3 +1,6 @@
+import requests
+from bs4 import BeautifulSoup
+
 from selenium import webdriver
 
 import selenium
@@ -8,6 +11,8 @@ from utils import logger
 from utils.AbstractParser import AbstractParser
 from constant import DRIVER_PATH
 from utils.InvalidAccountException import InvalidAccountException
+
+THREAD_POOL_SIZE = 20
 
 
 class TwiUtils(AbstractParser):
@@ -51,43 +56,51 @@ class TwiUtils(AbstractParser):
         if self.isSuspended():
             logger.info("Twitter account {name} is suspended.".format(name=username))
             return None
+        if self.notExist():
+            logger.info("Twitter account {name} not exist.".format(name=username))
+            return None
         self.browser.get("https://www.twitter.com/" + username)
         time.sleep(3)
 
         y_offset = 0
         d_height = 0
-        post_text = set()
-        post_images = set()
         err_count = 0
+        post_ids = []
         while True:
-            texts = []
-            image_urls = []
             try:
-                elements = self.browser.find_elements_by_css_selector("[lang]")[1:]
-                image_elements = self.browser.find_elements_by_class_name("AdaptiveMedia-photoContainer")
-                image_urls = [x.find_element_by_tag_name("img").get_attribute("src") for x in image_elements]
-                texts = [x.text for x in elements]
+                container = self.browser.find_element_by_class_name('stream')
+                elements = container.find_elements_by_class_name('stream-item')
+                post_ids = [x.get_attribute('id') for x in elements]
             except Exception as ex:
                 err_count += 1
                 logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
                 time.sleep(0.5)
                 if err_count > 20:
                     pass
-            post_text.update(texts)
-            post_images.update(image_urls)
-            self.browser.execute_script("window.scrollBy(0,2000)")
+            self.browser.execute_script("window.scrollBy(0,20000)")
             y_pos = self.browser.execute_script("return window.pageYOffset")
             curr_height = self.browser.execute_script("return document.body.scrollHeight")
             if y_pos == y_offset and d_height == curr_height:
                 break
             d_height = curr_height
             y_offset = y_pos
-            time.sleep(0.1)
-            if len(post_text) > 1000:
+            time.sleep(0.3)
+            if len(post_ids) > 1000:
                 break
-            logger.info("{} tweets parsed.".format(len(post_text)))
-        logger.info("{} tweets parsed, {} images parsed.".format(len(post_text), len(post_images)))
-        return {"text": list(post_text), "images": list(post_images)}
+            logger.info("{} tweets parsed.".format(len(post_ids)))
+        post_ids = [x.split('-')[-1] for x in post_ids]
+        post_urls = ['https://twitter.com/{}/status/{}'.format(username, id) for id in post_ids]
+        return post_urls
+
+    def get_post_content(self, url):
+        resp = requests.get(url)
+        data = resp.text
+        soup = BeautifulSoup(data)
+        desc_element = soup.find('meta', {'property': 'og:description'})
+        description = "" if not desc_element else desc_element['content']
+        images = [x['content'] for x in soup.find_all('meta', {'property': 'og:image'})]
+        images = list(filter(lambda x: 'profile_images' not in x, images))
+        return {'text': description, 'image': images}
 
     def close(self):
         self.browser.quit()
@@ -129,7 +142,8 @@ class TwiUtilsNoLogin(TwiUtils):
         if self.isSuspended() or self.isProtected():
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         profile = self.parse_profile(username)
-        posts_content = self.parse_posts(username)
+        posts_urls = self.parse_posts(username)
+        posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
         return {"profile": profile, "posts_content": posts_content}
 
 

@@ -31,7 +31,7 @@ class FlickrUtils(AbstractParser):
     def parse(self, username):
         self.set_user(username)
         profile = self.parse_profile(username)
-        posts = self.multi_thread_parse(self.parse_image_urls())
+        posts = self.multi_thread_parse(callback=self.get_post_content, urls=self.parse_image_urls())
         following = self.get_followings()
         groups = self.get_user_groups()
         return {"profile": profile, "posts_content": posts, "following": following, "groups": groups}
@@ -59,11 +59,6 @@ class FlickrUtils(AbstractParser):
             image_urls += urls
             has_more = self.next_page()
         return image_urls
-
-    def multi_thread_parse(self, urls):
-        pool = ThreadPool(20)
-        results = pool.map(self.get_post_content, urls)
-        return results
 
     def get_post_content(self, url):
         resp = requests.get(url)
