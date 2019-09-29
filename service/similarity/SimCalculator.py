@@ -4,8 +4,9 @@ import time
 from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
-from similarity.TextUtils import TensorSimilarity, singleword_similarity, desc_overlap_url, uclassify_similarity
+from similarity.TextUtils import TensorSimilarity, singleword_similarity, desc_overlap_url
 from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE, DATABASE_SIMILARITY_VECTOR, ALGOCONFIG_PATH
+from similarity.UclassifyUtils import uclassify_similarity
 from utils import logger
 from utils.Couch import Couch, _convert_float, _restore_float
 
@@ -78,6 +79,8 @@ class SimCalculator:
 
         logger.info('Evaluating uClassify topical similarity...')
         result['uclassify'] = uclassify_similarity(" ".join(_get_post_text(posts1)), " ".join(_get_post_text(posts2)))
+
+        logger.info('Calculation finished.')
         return result
 
     def overall_post_sim(self, posts1, posts2):

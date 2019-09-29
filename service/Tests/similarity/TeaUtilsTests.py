@@ -25,3 +25,7 @@ class TeaUtilsTests(unittest.TestCase):
         text2 = "How is it possible to adapt this code if the similarity has to be calculated within a matrix and not for two vectors? I thought I take a matrix and the transposed matrix instead of the second vector, bit it doesn't seem to work. "
         metrics = multi_thread_query_writing_style([text1, text2], n_threads=2)
         self.assertTrue(len(metrics) == 2)
+
+
+if __name__ == '__main__':
+    unittest.main()

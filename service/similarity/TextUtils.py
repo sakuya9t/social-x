@@ -1,9 +1,8 @@
-import ast
-import json
 import re
 import string
+import warnings
+
 import numpy as np
-import requests
 import textdistance
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet
@@ -11,13 +10,6 @@ from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from urlextract import URLExtract
-from constant import CONFIG_PATH
-from similarity.Config import Config
-from sklearn.metrics.pairwise import cosine_similarity
-
-import warnings
-
-from utils import logger
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 import tensorflow as tf
@@ -57,9 +49,9 @@ def initialize():
 
 def tokenize(text):
     text = text.lower()
-    text = re.sub(r'https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'https?://.*[\r\n]*', '', text, flags=re.MULTILINE)
     text = re.sub(r'\d+', '', text)
-    text = re.sub(r'[^\x00-\x7F]','', text)
+    text = re.sub(r'[^\x00-\x7F]', '', text)
     text = text.translate(str.maketrans('', '', string.punctuation))
     text = text.strip()
     tokens = word_tokenize(text)
@@ -123,42 +115,12 @@ def jaccard_counter_similarity(counter1, counter2):
     return 0 if union == 0 else intersection / union
 
 
-def uclassify_similarity(text1, text2):
-    topics1 = uclassify_topics(text1)
-    topics2 = uclassify_topics(text2)
-    keys = set().union(topics1, topics2)
-    vec1 = [topics1.get(key, 0) for key in keys]
-    vec2 = [topics2.get(key, 0) for key in keys]
-    return cosine_similarity([vec1], [vec2])[0][0]
-
-
-def uclassify_topics(text):
-    try:
-        keys = Config(CONFIG_PATH).get('uclassify/apikey')
-        url = 'https://api.uclassify.com/v1/uClassify/Topics/classify'
-        data = {'texts': [text]}
-        for key in keys:
-            header = {'Authorization': 'Token {}'.format(key), 'Content-Type': 'application/json'}
-            response = requests.post(url=url, data=json.dumps(data), headers=header)
-            if response.status_code == 200:
-                resp_data = ast.literal_eval(response.text)[0]['classification']
-                res = {x['className']: x['p'] for x in resp_data}
-                return res
-        raise UclassifyKeyExceedException('All uClassify keys daily usage exceed.')
-    except Exception as ex:
-        logger.error('Error when uClassifying text: {}'.format(ex))
-
-
-class UclassifyKeyExceedException(BaseException):
-    pass
-
-
 def intersection(lst1, lst2):
     return set(lst1).intersection(lst2)
 
 
 def extract_urls(text):
-    return [re.sub(r'https?\/\/', '', x.lower()) for x in URLExtract().find_urls(text)]
+    return [re.sub(r'https?//', '', x.lower()) for x in URLExtract().find_urls(text)]
 
 
 def _get_default_url(platform, username):
