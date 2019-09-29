@@ -1,6 +1,10 @@
 import os
 import ast
 
+import sys
+parent_path = os.path.abspath('..')
+sys.path.append(parent_path)
+
 from constant import CONFIG_PATH
 from similarity.Config import Config
 from utils import logger
