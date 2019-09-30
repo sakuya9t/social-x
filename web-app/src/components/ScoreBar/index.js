@@ -41,7 +41,7 @@ class ScoreBar extends Component{
         return <div className = 'scorebar-container'>
             <span className='scorebar-text scorebar-label'>{label}</span>
             <div className='scorebar-indicator' style={{width: currWidth}}/>
-            <span className='scorebar-text'>{score}</span>
+            <span className='scorebar-text'>{score.toFixed(4)}</span>
         </div>
     }
 }

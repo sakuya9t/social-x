@@ -50,7 +50,7 @@ class Homepage extends Component{
 
     sendRequest = () => {
         const {account1, account2} = this.state;
-        const data = {
+        const reqdata = {
             account1: {
                 platform: account1.platformName,
                 account: account1.text
@@ -62,7 +62,7 @@ class Homepage extends Component{
 
         // fetch('http://localhost:5000/query', {
         //     method: 'POST',
-        //     body: JSON.stringify(data),
+        //     body: JSON.stringify(reqdata),
         //     headers:{
         //         'Content-Type': 'application/json',
         //     }
@@ -170,9 +170,8 @@ class Homepage extends Component{
                         <Button className="home-submit-btn" onClick={this.submit}>Calculate</Button>
                     </p>
                 </div>
-
-                {showResult ? <ResultPage waiting={waitingResult} data={JSON.stringify(result)}/> : null}
             </div>
+            {showResult ? <ResultPage waiting={waitingResult} data={JSON.stringify(result)}/> : null}
             {this.LoginPage.apply()}
         </>;
     }
