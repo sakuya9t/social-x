@@ -45,7 +45,7 @@ for i in range(len(items)):
             continue
         if os.path.exists(ins_filename):
             continue
-        logger.info('{} / {} complete, insta account {}, twitter account {}.'.format(i, len(items), twi_account, ins_account))
+        logger.info('{} / {} complete, twitter account {}, instagram account {}.'.format(i, len(items), twi_account, ins_account))
         insta = InsUtilsNoLogin(False)
         twi = TwiUtilsNoLogin(False)
         logger.info('Start parsing Instagram...')

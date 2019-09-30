@@ -2,7 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS
 import flask
 
-from similarity.SimCalculator import SimCalculator
+from similarity.SimCalculator import SimCalculator, column_names
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
@@ -66,17 +66,18 @@ def query():
     data = json.loads(request.get_data())
     account1 = data['account1']
     account2 = data['account2']
-    score = algoModule.find_existing(account1, account2)
+    score = algoModule.fetch_vector(account1, account2)
     if len(score) == 0:
         info1 = retrieve(account1, mode=REALTIME_MODE)
         info2 = retrieve(account2, mode=REALTIME_MODE)
-        score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
-                            mode=REALTIME_MODE)
-        db = Couch(DATABASE_QUERY_RESULT)
-        db.insert({'query': data, 'result': score})
-        db.close()
-
-    return make_response({'result': score, 'doc_id': doc_id})
+        vector = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
+                                 mode=REALTIME_MODE)
+        doc_id = algoModule.store_result(info1, info2, vector)
+    else:
+        doc = score[0]
+        doc_id = doc['_id']
+        vector = doc['vector']
+    return make_response({'result': vector, 'columns': column_names, 'doc_id': doc_id})
 
 
 @app.route('/feedback', methods=["POST"])

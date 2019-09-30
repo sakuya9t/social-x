@@ -10,6 +10,18 @@ from similarity.UclassifyUtils import uclassify_similarity
 from utils import logger
 from utils.Couch import Couch, _convert_float, _restore_float
 
+column_names = {
+                    'score': 'Overall Similarity',
+                    'username': 'User Name',
+                    'profileImage': 'Profile Image',
+                    'self_desc': 'Text in Self Description',
+                    'desc_overlap_url_count': 'URL in Self Description',
+                    'readability': 'Writing Style (Readability)',
+                    'tea': 'Writing Style (Tea)',
+                    'post_text': 'Text in Posts',
+                    'uclassify': 'UClassify Similarity'
+                }
+
 
 class SimCalculator:
     def __init__(self):

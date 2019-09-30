@@ -71,8 +71,33 @@ class Homepage extends Component{
 
         // test data for ui
         let resdata = {
-            doc_id: '5bea4d3efa3646879',
-            result: 1.0
+            doc_id: '5475aa38048c626ea3f4b0cc53000528',
+            result: {
+                score: 0.687509,
+                columns: {
+                    score: 'Overall Similarity',
+                    username: 'User Name',
+                    profileImage: 'Profile Image',
+                    self_desc: 'Text in Self Description',
+                    desc_overlap_url_count: 'URL in Self Description',
+                    readability: 'Writing Style (Readability)',
+                    tea: 'Writing Style (Tea)',
+                    post_text: 'Text in Posts',
+                    uclassify: 'UClassify Similarity'
+                },
+                vector:{
+                    username: 0.1333333333333333,
+                    profileImage: 0.5357508659362793,
+                    self_desc: 0.23544350266456604,
+                    desc_overlap_url_count: 0,
+                    writing_style: {
+                    readability: 0.8307164884251507
+                    },
+                    post_text: 0.3679984211921692,
+                    uclassify: 0.044702274925621885,
+                    label: 0
+                }
+              }
         };
         // test data for ui end
 

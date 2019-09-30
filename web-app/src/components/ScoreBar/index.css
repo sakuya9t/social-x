@@ -9,11 +9,16 @@
     background-color: #37b5ff;
 }
 
-.scorebar-score{
+.scorebar-text{
     float: left;
     height: 1em;
     margin-left:20px;
     line-height: 1em;
     font-size: 2em;
     font-family: 'Raleway';
+}
+
+.scorebar-label{
+    width: 5em;
+    text-align: center;
 }

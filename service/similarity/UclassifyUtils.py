@@ -42,7 +42,7 @@ def uclassify_similarity(text1, text2):
     return cosine_similarity([vec1], [vec2])[0][0]
 
 
-class UclassifyKeyExceedException(BaseException):
+class UclassifyKeyExceedException(Exception):
     pass
 
 
@@ -86,7 +86,7 @@ class UclassifyKeyGenerator:
         self.browser.quit()
         for pid in pids:
             try:
-                os.system('kill -9 {}'.format(pid))
+                os.system('kill -9 {} > /dev/null 2>&1'.format(pid))
             except psutil.NoSuchProcess:
                 continue
 

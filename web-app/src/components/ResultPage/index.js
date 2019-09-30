@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import './index.css';
 import { BounceLoader } from 'react-spinners';
+import ScoreDisplay from '../ScoreDisplay';
 
 class ResultPage extends  Component{
     constructor(props) {
@@ -9,6 +10,14 @@ class ResultPage extends  Component{
             loading: true
         };
     }
+
+    displayRows = (columns, vector) => {
+        for(let key of Object.keys(vector)){
+            if(columns[key]){
+                console.log(columns[key]);
+            }
+        }
+    } 
 
     render(){
         const {data, waiting} = this.props;
@@ -29,8 +38,14 @@ class ResultPage extends  Component{
               );
         }
         else{
+            const jsondata = JSON.parse(data);
+            const {score, columns, vector} = jsondata;
+            this.displayRows(columns, vector);
             return (
                 <div className='resultpage-container'>
+                    <div className='reaultpage-overall-indicator'>The Overall Similarity Score is: </div>
+                    <ScoreDisplay score={score} delay={3} />
+                    <ul></ul>
                     {data}
                 </div>
             );

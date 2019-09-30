@@ -71,10 +71,10 @@ class InsUtilsNoLogin(InsUtils):
             is_404 = len(self.browser.find_elements_by_class_name("dialog-404")) != 0
             if is_404:
                 raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
-            screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
+            screen_name = self.browser.find_element_by_tag_name("h1").text
             profile_img = self.parse_profile_img()
-            is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
-            is_empty_account = "No Posts Yet" in self.browser.find_elements_by_tag_name("body")[0].text
+            is_private = "This Account is Private" in self.browser.find_element_by_tag_name("body").text
+            is_empty_account = "No Posts Yet" in self.browser.find_element_by_tag_name("body").text
             desc_div = self.browser.find_elements_by_tag_name("section")[1].find_elements_by_tag_name("div")[1]
             desc_str = desc_div.get_attribute("innerText")
             desc_str = desc_str.replace("\n", ";;")
