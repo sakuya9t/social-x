@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
 import './index.css';
 import { BounceLoader } from 'react-spinners';
-import { Button } from 'react-bootstrap';
 import ScoreDisplay from '../ScoreDisplay';
 import ScoreBar from '../ScoreBar';
+import Feedback from '../Feedback';
 
 
 const flattenObject = (ob) => {
@@ -35,7 +35,7 @@ class ResultPage extends  Component{
 
     displayRows = (columns, vector) => {
         return Object.keys(vector).map((key) => 
-    columns[key] ? <li key={key}><ScoreBar score={vector[key]} delay={3} label={columns[key]}/></li> : null
+            columns[key] ? <li key={key}><ScoreBar score={vector[key]} delay={3} label={columns[key]}/></li> : null
         );
     }
 
@@ -68,7 +68,7 @@ class ResultPage extends  Component{
                     <div className='reaultpage-indicator'>Details: </div>
                     <ul className='resultpage-detaillist-container'>{this.displayRows(columns, vector)}</ul>
                     <div className='reaultpage-indicator'>We believe two accounts are {score >= 0.5 ? null : "not"} belonged to one user.</div>
-                    <Button>Feedback</Button>
+                    <Feedback />
                 </div>
             );
         }
