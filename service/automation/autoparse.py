@@ -2,7 +2,7 @@ import os
 import ast
 
 import sys
-parent_path = os.path.abspath('..')
+parent_path = os.path.abspath('.')
 sys.path.append(parent_path)
 
 from constant import CONFIG_PATH
@@ -48,18 +48,22 @@ for i in range(len(items)):
         logger.info('{} / {} complete, twitter account {}, instagram account {}.'.format(i, len(items), twi_account, ins_account))
         insta = InsUtilsNoLogin(False)
         twi = TwiUtilsNoLogin(False)
+        if insta.is_invalid(ins_account):
+            logger.warning('Invalid Instagram account.')
+            insta.close()
+            twi.close()
+            continue
+        if twi.isSuspendedOrInvalid(twi_account):
+            logger.warning('Invalid Twitter account.')
+            insta.close()
+            twi.close()
+            continue
         logger.info('Start parsing Instagram...')
         ins_info = insta.parse(ins_account)
         insta.close()
-        if ins_info == "INVALID":
-            logger.warning('Invalid Instagram account.')
-            continue
         logger.info('Start parsing Twitter...')
         twi_info = twi.parse(twi_account)
         twi.close()
-        if len(twi_info.keys()) == 0:
-            logger.warning('Invalid Twitter account.')
-            continue
         with open('/data/dev/insdata/'+ins_account+'.txt', "a") as file:
             file.write(str(ins_info))
         with open('/data/dev/twidata/'+twi_account+'.txt', "a") as file:

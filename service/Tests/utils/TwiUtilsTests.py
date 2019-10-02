@@ -1,5 +1,6 @@
 import unittest
 
+from utils.InvalidAccountException import InvalidAccountException
 from utils.TwiUtils import TwiUtilsNoLogin
 
 
@@ -20,9 +21,21 @@ class TwiUtilsTests(unittest.TestCase):
 
     def test_parse_protect(self):
         u = TwiUtilsNoLogin()
-        info = u.parse('YG_iKONph')
+        content = u.parse('DarkcryEwan')
         u.close()
-        print(info)
+        self.assertTrue('profile' in content.keys() and 'posts_content' in content.keys())
+
+    def test_parse_empty(self):
+        u = TwiUtilsNoLogin()
+        content = u.parse('JayMains')
+        u.close()
+        self.assertTrue('profile' in content.keys() and 'posts_content' in content.keys())
+
+    def test_parse_invalid_should_raise_exception(self):
+        u = TwiUtilsNoLogin()
+        with self.assertRaises(InvalidAccountException):
+            u.parse('enako_cos334455')
+        u.close()
 
 
 if __name__ == '__main__':
