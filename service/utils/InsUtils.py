@@ -14,6 +14,8 @@ from utils import logger
 from utils.AbstractParser import AbstractParser
 from utils.InvalidAccountException import InvalidAccountException
 
+QUEUE_SIZE_THRESHOLD = 10
+
 
 class InsUtils(AbstractParser):
     def __init__(self, displayed=False):
@@ -61,19 +63,27 @@ class InsUtils(AbstractParser):
         self.browser.get("https://www.instagram.com/" + username + "/")
         time.sleep(3)
         a_hrefs = set()
-        y_offset = 0
+        queue_window_pos = []
+        queue_window_size = []
         while True:
-            self.browser.execute_script("window.scrollBy(0,300)")
             y_pos = self.browser.execute_script("return window.pageYOffset")
-            if y_pos == y_offset:
-                break
-            y_offset = y_pos
+            curr_height = self.browser.execute_script("return document.body.scrollHeight")
+            queue_window_pos.append(y_pos)
+            if len(queue_window_pos) > QUEUE_SIZE_THRESHOLD:
+                queue_window_pos.pop(0)
+            queue_window_size.append(curr_height)
+            if len(queue_window_size) > QUEUE_SIZE_THRESHOLD:
+                queue_window_size.pop(0)
+            if len(queue_window_pos) >= QUEUE_SIZE_THRESHOLD and len(queue_window_size) >= QUEUE_SIZE_THRESHOLD:
+                if queue_window_pos[1:] == queue_window_pos[:-1] and queue_window_size[1:] == queue_window_size[:-1]:
+                    break
             mainpart = self.browser.find_elements_by_tag_name("article")[0] \
                 .find_elements_by_xpath("*")[0].find_elements_by_xpath("*")[0]
             a_labels = mainpart.find_elements_by_tag_name("a")
             for a_label in a_labels:
                 a_href = a_label.get_attribute("href")
                 a_hrefs.add(a_href)
+            self.browser.execute_script("window.scrollBy(0,300)")
             time.sleep(0.1)
         a_hrefs = list(a_hrefs)
         return a_hrefs[:500]

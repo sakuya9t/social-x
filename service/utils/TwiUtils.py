@@ -13,6 +13,7 @@ from constant import DRIVER_PATH
 from utils.InvalidAccountException import InvalidAccountException
 
 THREAD_POOL_SIZE = 20
+QUEUE_SIZE_THRESHOLD = 20
 
 
 class TwiUtils(AbstractParser):
@@ -59,8 +60,8 @@ class TwiUtils(AbstractParser):
         self.browser.get("https://www.twitter.com/" + username)
         time.sleep(3)
 
-        y_offset = 0
-        d_height = 0
+        queue_window_pos = []
+        queue_window_size = []
         err_count = 0
         post_ids = []
         while True:
@@ -73,15 +74,20 @@ class TwiUtils(AbstractParser):
                 logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
                 time.sleep(0.5)
                 if err_count > 20:
-                    pass
+                    continue
             self.browser.execute_script("window.scrollBy(0,20000)")
+            time.sleep(0.3)
             y_pos = self.browser.execute_script("return window.pageYOffset")
             curr_height = self.browser.execute_script("return document.body.scrollHeight")
-            if y_pos == y_offset and d_height == curr_height:
-                break
-            d_height = curr_height
-            y_offset = y_pos
-            time.sleep(0.3)
+            queue_window_pos.append(y_pos)
+            if len(queue_window_pos) > QUEUE_SIZE_THRESHOLD:
+                queue_window_pos.pop(0)
+            queue_window_size.append(curr_height)
+            if len(queue_window_size) > QUEUE_SIZE_THRESHOLD:
+                queue_window_size.pop(0)
+            if len(queue_window_pos) >= QUEUE_SIZE_THRESHOLD and len(queue_window_size) >= QUEUE_SIZE_THRESHOLD:
+                if queue_window_pos[1:] == queue_window_pos[:-1] and queue_window_size[1:] == queue_window_size[:-1]:
+                    break
             if len(post_ids) > 1000:
                 break
         post_ids = [x.split('-')[-1] for x in post_ids]

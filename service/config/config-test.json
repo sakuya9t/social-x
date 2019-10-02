@@ -10,7 +10,7 @@
     "username": "",
     "password": ""
   },
-  "mrisa":{
+  "mrisa": {
     "server-path": "",
     "port": 0
   },
@@ -27,7 +27,7 @@
     ]
   },
   "uclassify": {
-    "apikey": ""
+    "apikey": "aaabbb"
   },
   "sampler": {
     "mode": "",
