@@ -52,63 +52,36 @@ class Homepage extends Component{
         const {account1, account2} = this.state;
         const reqdata = {
             account1: {
-                platform: account1.platformName,
+                platform: account1.platformName.toLowerCase(),
                 account: account1.text
             }, 
             account2: {
-                platform: account2.platformName,
+                platform: account2.platformName.toLowerCase(),
                 account: account2.text
             }};
 
-        // fetch('http://localhost:5000/query', {
-        //     method: 'POST',
-        //     body: JSON.stringify(reqdata),
-        //     headers:{
-        //         'Content-Type': 'application/json',
-        //     }
-        // }).then(res => res.text())
-        // .then(res => console.log(res));
-
-        // test data for ui
-        let resdata = {
-            doc_id: '5475aa38048c626ea3f4b0cc53000528',
-            result: {
-                score: 0.687509,
-                columns: {
-                    score: 'Overall Similarity',
-                    username: 'User Name',
-                    profileImage: 'Profile Image',
-                    self_desc: 'Text in Self Description',
-                    desc_overlap_url_count: 'URL in Self Description',
-                    readability: 'Writing Style (Readability)',
-                    tea: 'Writing Style (Tea)',
-                    post_text: 'Text in Posts',
-                    uclassify: 'UClassify Similarity'
-                },
-                vector:{
-                    username: 0.1333333333333333,
-                    profileImage: 0.5357508659362793,
-                    self_desc: 0.23544350266456604,
-                    desc_overlap_url_count: 0,
-                    writing_style: {
-                    readability: 0.8307164884251507
-                    },
-                    post_text: 0.3679984211921692,
-                    uclassify: 0.044702274925621885,
-                    label: 0
-                }
-              }
-        };
-        // test data for ui end
-
         this.setState({
             ...this.state,
-            result: resdata.result,
             showResult: true,
-            resultId: resdata.doc_id
+            waitingResult: true
+        }, () => {
+            fetch('http://localhost:5000/query', {
+                method: 'POST',
+                body: JSON.stringify(reqdata),
+                headers:{
+                    'Content-Type': 'application/json',
+                }
+            }).then(res => res.json())
+            .then(resdata => {
+                this.setState({
+                    ...this.state,
+                    waitingResult: false,
+                    result: resdata,
+                    resultId: resdata.doc_id
+                });
+                animateScroll.scrollToBottom();
+            });
         });
-
-        animateScroll.scrollToBottom();
     }
 
     submit = () => {

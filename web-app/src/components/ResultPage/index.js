@@ -60,7 +60,7 @@ class ResultPage extends  Component{
         else{
             const jsondata = JSON.parse(data);
             const {score, columns} = jsondata;
-            const vector = flattenObject(jsondata.vector);
+            const vector = flattenObject(jsondata.result);
             return (
                 <div className='resultpage-container'>
                     <div className='reaultpage-indicator'>The Overall Similarity Score is: </div>
