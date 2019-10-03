@@ -30,6 +30,7 @@ class SimCalculator:
         self.semantic_sim = TensorSimilarity()
 
     @staticmethod
+    # store result will run right after calc function.
     def store_result(info1, info2, vector, database):
         database = Couch(database)
         timestamp = calendar.timegm(time.gmtime())
@@ -55,12 +56,12 @@ class SimCalculator:
             if len(existing_value) > 0:
                 logger.info('Similarity score already exist, return in REAL TIME MODE....')
                 return existing_value[0]
-        vector = self.vectorize(info1, info2, mode)
+        vector = self.__vectorize(info1, info2, mode)
         if enable_networking:
             vector['network'] = network_sim(info1, info2)
         return vector
 
-    def vectorize(self, info1, info2, mode):
+    def __vectorize(self, info1, info2, mode):
         # todo: handle modes.
         result = {}
         profile1, profile2 = info1['profile'], info2['profile']

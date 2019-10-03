@@ -1,18 +1,17 @@
+import json
+
+import flask
 from flask import Flask, request
 from flask_cors import CORS
-import flask
 
+from constant import REALTIME_MODE, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, \
+    DATABASE_DATA_AWAIT_BATCH
 from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
-from utils import InvalidAccountException
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
-import json
-
 from utils.QueryGenerator import retrieve
 from utils.TwiUtils import TwiUtilsWithLogin
-from constant import REALTIME_MODE, DATABASE_QUERY_RESULT, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, \
-    DATABASE_DATA_AWAIT_BATCH
 
 app = Flask(__name__)
 CORS(app)

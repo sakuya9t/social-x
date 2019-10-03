@@ -18,7 +18,7 @@ def generate(size, positive):
             fetch_result = calculator.fetch_vector(data1, data2, DATABASE_LABELED_DATA)
             if len(fetch_result) > 0:
                 continue
-            vector = (calculator.vectorize(data1, data2, BATCH_MODE))
+            vector = (calculator.calc(data1, data2, enable_networking=False, mode=BATCH_MODE))
             vector['label'] = 1 if positive else 0
             calculator.store_result(data1, data2, vector, DATABASE_LABELED_DATA)
         except Exception as ex:
