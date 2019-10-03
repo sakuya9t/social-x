@@ -67,6 +67,17 @@ class CouchdbTests(unittest.TestCase):
         res_obj = _convert_float(_restore_float(obj))
         self.assertEqual(obj, res_obj)
 
+    def test_delete(self):
+        obj = {"abc": "1234", "def": "4567"}
+        selector = {"abc": "1234"}
+        db = Couch('test')
+        db.distinct_insert(obj)
+        query_result = db.query(selector)
+        self.assertTrue(len(query_result) > 0)
+        db.delete(selector)
+        query_result = db.query(selector)
+        self.assertEqual(0, len(query_result))
+
 
 if __name__ == '__main__':
     unittest.main()
