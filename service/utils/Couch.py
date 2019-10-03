@@ -60,6 +60,12 @@ class Couch:
             qlist.append(doc)
         return qlist
 
+    def query_multiple(self, selectors):
+        qlist = []
+        for selector in selectors:
+            qlist += self.query(selector)
+        return qlist
+
     # insert operation of the database;
     # usage: database.insert(doc);
     # fields: doc -> Dictionary
