@@ -1,7 +1,6 @@
 import unittest
 
 from similarity.Config import Config
-from similarity.ImageUtils import Mrisa
 
 
 class ConfigTests(unittest.TestCase):

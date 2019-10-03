@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from training.Sampler import Sampler, CONFIG, INSTA_FOLDER, TWITTER_FOLDER
+from training.Sampler import Sampler, INSTA_FOLDER, TWITTER_FOLDER
 
 
 class SamplerTests(unittest.TestCase):
