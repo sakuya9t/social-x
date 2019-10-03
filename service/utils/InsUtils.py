@@ -46,6 +46,8 @@ class InsUtils(AbstractParser):
         return is_private or is_empty
 
     def parse_profile(self, username):
+        if is_ip_banned_by_insta():
+            raise InstagramIPForbiddenException('Server IP Is banned by Instagram.')
         if self.is_invalid(username):
             raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
 
@@ -107,6 +109,8 @@ class InsUtils(AbstractParser):
 
 class InsUtilsNoLogin(InsUtils):
     def parse(self, username):
+        if is_ip_banned_by_insta():
+            raise InstagramIPForbiddenException('Server IP Is banned by Instagram.')
         if self.is_invalid(username):
             raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
         profile = self.parse_profile(username)
@@ -212,3 +216,7 @@ def is_ip_banned_by_insta():
     indicator = random.choice(indicator_accounts)
     resp = requests.get('https://www.instagram.com/{}'.format(indicator))
     return 'login' in resp.url
+
+
+class InstagramIPForbiddenException(Exception):
+    pass

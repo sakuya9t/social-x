@@ -8,7 +8,7 @@ sys.path.append(parent_path)
 from constant import CONFIG_PATH
 from similarity.Config import Config
 from utils import logger
-from utils.InsUtils import InsUtilsNoLogin
+from utils.InsUtils import InsUtilsNoLogin, InstagramIPForbiddenException
 from utils.TwiUtils import TwiUtilsNoLogin
 
 CONFIG = Config(CONFIG_PATH)
@@ -70,6 +70,9 @@ for i in range(len(items)):
             file.write(str(ins_info))
         with open('/data/dev/twidata/'+twi_account+'.txt', "a") as file:
             file.write(str(twi_info))
+    except InstagramIPForbiddenException:
+        logger.error('Server banned by Instagram. Please change an IP address.')
+        break
     except Exception as e:
         logger.error(e)
         if twi:
