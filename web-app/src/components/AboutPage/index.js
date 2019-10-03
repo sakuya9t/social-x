@@ -1,13 +1,30 @@
 import React, {Component} from 'react';
-import ScoreDisplay from '../ScoreDisplay';
-import ScoreBar from '../ScoreBar';
+import Feedback from '../Feedback';
 
 class AboutPage extends Component{
+    constructor(props){
+        super(props);
+        this.state = {
+            abc: "123"
+        }
+    }
+
+    testClick = () => {
+        this.setState({
+            ...this.state,
+            abc: "456"
+        }, () => {
+            setTimeout(() => this.setState({
+                ...this.state,
+                abc: "789"
+            }), 6000);
+        });
+    }
+
     render = () => {
         return <>
-            <ScoreDisplay score={0.2} delay={3} />
-            <ScoreBar score={0.4825} delay={3}/>
-            <ScoreBar score={0.7794} delay={3}/>
+            <button onClick={this.testClick}>abc</button>
+            {this.state.abc}
         </>
     }
 }

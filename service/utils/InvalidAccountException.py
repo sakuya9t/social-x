@@ -1,2 +1,2 @@
-class InvalidAccountException(BaseException):
+class InvalidAccountException(Exception):
     pass

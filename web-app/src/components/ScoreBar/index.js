@@ -36,11 +36,12 @@ class ScoreBar extends Component{
     }
 
     render = () => {
-        const {score} = this.props;
+        const {score, label} = this.props;
         const {currWidth} = this.state;
         return <div className = 'scorebar-container'>
+            <span className='scorebar-text scorebar-label'>{label}</span>
             <div className='scorebar-indicator' style={{width: currWidth}}/>
-            <span className='scorebar-score'>{score}</span>
+            <span className='scorebar-text'>{score.toFixed(4)}</span>
         </div>
     }
 }

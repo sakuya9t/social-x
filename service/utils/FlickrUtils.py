@@ -1,12 +1,13 @@
-import selenium
-import time
 import re
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
-from bs4 import BeautifulSoup
+import time
+
 import requests
-from multiprocessing.dummy import Pool as ThreadPool
+import selenium
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.options import Options
+
 from constant import DRIVER_PATH
 from utils.AbstractParser import AbstractParser
 

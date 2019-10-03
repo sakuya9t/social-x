@@ -29,7 +29,7 @@ class ScoreDisplay extends Component{
         });
     }
 
-    componentWillMount(){
+    componentDidMount(){
         const {delay} = this.props;
         this.startTimer();
         setTimeout(this.stopTimer, delay * 1000);

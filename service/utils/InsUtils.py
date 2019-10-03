@@ -1,4 +1,6 @@
 import ast
+import json
+import random
 import re
 import time
 
@@ -13,6 +15,8 @@ from utils import logger
 from utils.AbstractParser import AbstractParser
 from utils.InvalidAccountException import InvalidAccountException
 
+QUEUE_SIZE_THRESHOLD = 10
+
 
 class InsUtils(AbstractParser):
     def __init__(self, displayed=False):
@@ -24,25 +28,65 @@ class InsUtils(AbstractParser):
         self.browser.set_window_size(1920, 1080)
         self.browser.get("https://www.instagram.com/")
 
-    def parse_profile_img(self):
-        ele = self.browser.find_elements_by_tag_name("header")[0].find_elements_by_tag_name("img")[0]
-        return ele.get_attribute('src')
+    def is_invalid(self, username):
+        url = "https://www.instagram.com/" + username
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text)
+        target_ele = soup.find_all('meta', {'property': 'og:title'})
+        return len(target_ele) == 0
 
-    def parse_posts(self):
+    def is_private_or_protected(self, username):
+        url = "https://www.instagram.com/" + username
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text)
+        major_script = list(filter(lambda x: 'window._sharedData = ' in x.text, soup.find_all('script')))[0].text
+        major_script = json.loads(re.findall(r'{\".*}', major_script)[0])
+        is_private = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['is_private']
+        is_empty = len(major_script['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['edges']) == 0
+        return is_private or is_empty
+
+    def parse_profile(self, username):
+        if is_ip_banned_by_insta():
+            raise InstagramIPForbiddenException('Server IP Is banned by Instagram.')
+        if self.is_invalid(username):
+            raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
+
+        response = requests.get('https://www.instagram.com/{}/'.format(username))
+        soup = BeautifulSoup(response.text)
+        major_script = list(filter(lambda x: 'window._sharedData = ' in x.text, soup.find_all('script')))[0].text
+        major_script = json.loads(re.findall(r'{\".*}', major_script)[0])
+        profile_img = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['profile_pic_url_hd']
+
+        user_info = json.loads(soup.find('script', {'type': 'application/ld+json'}).text.strip())
+        screen_name = user_info['name']
+        desc_str = user_info['description'].replace("\n", ";;") if 'description' in user_info.keys() else ""
+        return {"username": screen_name, "description": desc_str, "image": profile_img}
+
+    def parse_posts(self, username):
+        self.browser.get("https://www.instagram.com/" + username + "/")
+        time.sleep(3)
         a_hrefs = set()
-        y_offset = 0
+        queue_window_pos = []
+        queue_window_size = []
         while True:
-            self.browser.execute_script("window.scrollBy(0,300)")
             y_pos = self.browser.execute_script("return window.pageYOffset")
-            if y_pos == y_offset:
-                break
-            y_offset = y_pos
+            curr_height = self.browser.execute_script("return document.body.scrollHeight")
+            queue_window_pos.append(y_pos)
+            if len(queue_window_pos) > QUEUE_SIZE_THRESHOLD:
+                queue_window_pos.pop(0)
+            queue_window_size.append(curr_height)
+            if len(queue_window_size) > QUEUE_SIZE_THRESHOLD:
+                queue_window_size.pop(0)
+            if len(queue_window_pos) >= QUEUE_SIZE_THRESHOLD and len(queue_window_size) >= QUEUE_SIZE_THRESHOLD:
+                if queue_window_pos[1:] == queue_window_pos[:-1] and queue_window_size[1:] == queue_window_size[:-1]:
+                    break
             mainpart = self.browser.find_elements_by_tag_name("article")[0] \
                 .find_elements_by_xpath("*")[0].find_elements_by_xpath("*")[0]
             a_labels = mainpart.find_elements_by_tag_name("a")
             for a_label in a_labels:
                 a_href = a_label.get_attribute("href")
                 a_hrefs.add(a_href)
+            self.browser.execute_script("window.scrollBy(0,300)")
             time.sleep(0.1)
         a_hrefs = list(a_hrefs)
         return a_hrefs[:500]
@@ -64,43 +108,16 @@ class InsUtils(AbstractParser):
 
 
 class InsUtilsNoLogin(InsUtils):
-    def parse_profile(self, username):
-        self.browser.get("https://www.instagram.com/" + username + "/")
-        time.sleep(3)
-        try:
-            is_404 = len(self.browser.find_elements_by_class_name("dialog-404")) != 0
-            if is_404:
-                raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
-            screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
-            profile_img = self.parse_profile_img()
-            is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
-            is_empty_account = "No Posts Yet" in self.browser.find_elements_by_tag_name("body")[0].text
-            desc_div = self.browser.find_elements_by_tag_name("section")[1].find_elements_by_tag_name("div")[1]
-            desc_str = desc_div.get_attribute("innerText")
-            desc_str = desc_str.replace("\n", ";;")
-            if is_private:
-                logger.info("Instagram user " + screen_name + " is a private account.")
-                return {"username": screen_name, "status": "PRIVATE", "description": desc_str, "image": profile_img}
-            if is_empty_account:
-                logger.info("Instagram user " + screen_name + " is an empty account.")
-                return {"username": screen_name, "status": "EMPTY", "description": desc_str, "image": profile_img}
-            time.sleep(3)
-
-            return {"username": screen_name, "description": desc_str, "image": profile_img}
-        except InvalidAccountException as ex:
-            raise ex
-        except Exception as ex:
-            logger.error(str(ex))
-            return "INVALID"
-
     def parse(self, username):
-        profile = self.parse_profile(username)
-        if profile == 'INVALID':
+        if is_ip_banned_by_insta():
+            raise InstagramIPForbiddenException('Server IP Is banned by Instagram.')
+        if self.is_invalid(username):
             raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
+        profile = self.parse_profile(username)
         logger.info("Parse Instagram profile {} succeed.".format(username))
-        if "status" in profile.keys() and profile["status"] in ["PRIVATE", "EMPTY"]:
+        if self.is_private_or_protected(username):
             return {"profile": profile, "posts_content": []}
-        posts_urls = self.parse_posts()
+        posts_urls = self.parse_posts(username)
         logger.info(
             "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
@@ -125,45 +142,8 @@ class InsUtilsWithLogin(InsUtils):
         time.sleep(3)
         return self.browser.current_url != 'https://www.instagram.com/accounts/login/'
 
-    def parse_profile(self, username):
+    def parse_network(self, username):
         self.browser.get("https://www.instagram.com/" + username + "/")
-        time.sleep(3)
-        try:
-            is_404 = len(self.browser.find_elements_by_class_name("dialog-404")) != 0
-            if is_404:
-                raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
-            screen_name = self.browser.find_elements_by_tag_name("h1")[0].text
-            profile_img = self.parse_profile_img()
-            is_private = "This Account is Private" in self.browser.find_elements_by_tag_name("body")[0].text
-            is_empty_account = "No Posts Yet" in self.browser.find_elements_by_tag_name("body")[0].text
-            if is_private or is_empty_account:
-                desc_div = self.browser.find_elements_by_tag_name("section")[1].find_elements_by_tag_name("div")[2]
-            else:
-                desc_div = self.browser.find_elements_by_tag_name("section")[1].find_elements_by_tag_name("div")[5]
-            desc_str = desc_div.get_attribute("innerText")
-            desc_str = desc_str.replace("\n", ";;")
-            if is_private:
-                logger.info("Instagram user " + screen_name + " is a private account.")
-                return {"username": screen_name, "status": "PRIVATE", "description": desc_str, "image": profile_img}
-            if is_empty_account:
-                logger.info("Instagram user " + screen_name + " is an empty account.")
-                return {"username": screen_name, "status": "EMPTY", "description": desc_str, "image": profile_img}
-            following_btn = self.browser.find_element_by_css_selector("[href=\"/" + screen_name + "/following/\"]")
-            following_num = self.turn_num(following_btn.find_elements_by_tag_name("span")[0].get_attribute("innerText"))
-            follower_btn = self.browser.find_element_by_css_selector("[href=\"/" + screen_name + "/followers/\"]")
-            follower_num = self.turn_num(follower_btn.find_elements_by_tag_name("span")[0].get_attribute("innerText"))
-            following_btn.click()
-            time.sleep(3)
-
-            return {"username": screen_name, "following": following_num, "follower": follower_num,
-                    "description": desc_str, "image": profile_img}
-        except InvalidAccountException as ex:
-            raise ex
-        except Exception as ex:
-            logger.error(str(ex))
-            return "INVALID"
-
-    def parse_network(self):
         sub_window_container = self.browser.find_element_by_css_selector("[role=\"dialog\"]") \
             .find_elements_by_xpath("*")[2]
         length = 0
@@ -200,16 +180,16 @@ class InsUtilsWithLogin(InsUtils):
         return int(i)
 
     def parse(self, username):
-        profile = self.parse_profile(username)
-        if profile == 'INVALID':
+        if self.is_invalid(username):
             raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
+        profile = self.parse_profile(username)
         logger.info("Parse Instagram profile {} succeed.".format(username))
-        if "status" in profile.keys() and profile["status"] == "PRIVATE":
-            return {'profile': profile, "posts_content": []}
-        following = self.parse_network()
+        if self.is_private_or_protected(username):
+            return {"profile": profile, "posts_content": []}
+        following = self.parse_network(username)
         logger.info(
             "Parse Instagram account {} following succeed, ".format(username) + str(len(following)) + " followings.")
-        posts_urls = self.parse_posts()
+        posts_urls = self.parse_posts(username)
         logger.info(
             "Parse Instagram account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
@@ -229,3 +209,14 @@ def is_valid_instagram_data(content):
     if 'posts_content' not in content.keys():
         return 'profile' in content.keys() and 'status' in content['profile'].keys()
     return True
+
+
+def is_ip_banned_by_insta():
+    indicator_accounts = ['michaelronda', 'timl1302', 'unimelb', 'ucberkeleyofficial', 'enakorin']
+    indicator = random.choice(indicator_accounts)
+    resp = requests.get('https://www.instagram.com/{}'.format(indicator))
+    return 'login' in resp.url
+
+
+class InstagramIPForbiddenException(Exception):
+    pass

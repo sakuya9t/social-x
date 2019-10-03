@@ -1,9 +1,4 @@
 {
-  "logger": {
-    "color-enabled": true,
-    "write-to-file": false,
-    "logfile-path": "/data/log/server-x.log"
-  },
   "microsoft": {
     "subscription_key": ""
   },
@@ -15,7 +10,7 @@
     "username": "",
     "password": ""
   },
-  "mrisa":{
+  "mrisa": {
     "server-path": "",
     "port": 0
   },
@@ -32,7 +27,7 @@
     ]
   },
   "uclassify": {
-    "apikey": ""
+    "apikey": "aaabbb"
   },
   "sampler": {
     "mode": "",

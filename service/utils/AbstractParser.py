@@ -24,7 +24,7 @@ class AbstractParser:
             self.browser.quit()
             for pid in pids:
                 try:
-                    os.system('kill -9 {}'.format(pid))
+                    os.system('kill -9 {} > /dev/null 2>&1'.format(pid))
                 except psutil.NoSuchProcess:
                     continue
 
