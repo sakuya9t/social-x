@@ -5,6 +5,7 @@
     "instance_type": "",
     "keypair_name": "",
     "image_name": "NeCTAR Ubuntu 18.04 LTS (Bionic) amd64",
-    "security_groups": ["default"]
+    "security_groups": ["default"],
+    "zone": ""
   }
 }
