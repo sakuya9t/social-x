@@ -36,6 +36,8 @@ twitter_accounts = [x['twitter'] for x in items]
 insta_accounts = [x['instagram'] for x in items]
 
 for i in range(len(items)):
+    twi = None
+    insta = None
     try:
         twi_account = twitter_accounts[i]
         ins_account = insta_accounts[i]
@@ -70,4 +72,8 @@ for i in range(len(items)):
             file.write(str(twi_info))
     except Exception as e:
         logger.error(e)
+        if twi:
+            twi.close()
+        if insta:
+            insta.close()
         continue

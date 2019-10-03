@@ -1,5 +1,6 @@
 import ast
 import json
+import random
 import re
 import time
 
@@ -56,7 +57,7 @@ class InsUtils(AbstractParser):
 
         user_info = json.loads(soup.find('script', {'type': 'application/ld+json'}).text.strip())
         screen_name = user_info['name']
-        desc_str = user_info['description'].replace("\n", ";;")
+        desc_str = user_info['description'].replace("\n", ";;") if 'description' in user_info.keys() else ""
         return {"username": screen_name, "description": desc_str, "image": profile_img}
 
     def parse_posts(self, username):
@@ -204,3 +205,10 @@ def is_valid_instagram_data(content):
     if 'posts_content' not in content.keys():
         return 'profile' in content.keys() and 'status' in content['profile'].keys()
     return True
+
+
+def is_ip_banned_by_insta():
+    indicator_accounts = ['michaelronda', 'timl1302', 'unimelb', 'ucberkeleyofficial', 'enakorin']
+    indicator = random.choice(indicator_accounts)
+    resp = requests.get('https://www.instagram.com/{}'.format(indicator))
+    return 'login' in resp.url

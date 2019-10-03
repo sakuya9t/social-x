@@ -74,7 +74,7 @@ class TwiUtils(AbstractParser):
                 logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
                 time.sleep(0.5)
                 if err_count > 20:
-                    continue
+                    return None
             self.browser.execute_script("window.scrollBy(0,20000)")
             time.sleep(0.3)
             y_pos = self.browser.execute_script("return window.pageYOffset")
@@ -135,6 +135,8 @@ class TwiUtilsNoLogin(TwiUtils):
         if self.isProtectedOrEmpty(username):
             return {"profile": profile, "posts_content": []}
         posts_urls = self.parse_posts(username)
+        if posts_urls is None:
+            raise ValueError('Exception happened when parsing Twitter account {}'.format(username))
         logger.info(
             "Parse Twitter account {} posts url succeed, ".format(username) + str(len(posts_urls)) + " posts.")
         posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
