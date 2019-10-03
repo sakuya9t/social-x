@@ -2,7 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS
 import flask
 
-from similarity.SimCalculator import SimCalculator, column_names
+from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
@@ -10,7 +10,8 @@ import json
 
 from utils.QueryGenerator import retrieve
 from utils.TwiUtils import TwiUtilsWithLogin
-from constant import REALTIME_MODE, DATABASE_QUERY_RESULT, DATABASE_FEEDBACK, DATABASE_CREDENTIAL
+from constant import REALTIME_MODE, DATABASE_QUERY_RESULT, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, \
+    DATABASE_DATA_AWAIT_BATCH
 
 app = Flask(__name__)
 CORS(app)
@@ -66,18 +67,20 @@ def query():
     data = json.loads(request.get_data())
     account1 = data['account1']
     account2 = data['account2']
-    score = algoModule.fetch_vector(account1, account2)
+    score = query_existing_similarity_in_db(account1, account2)
     if len(score) == 0:
         info1 = retrieve(account1, mode=REALTIME_MODE)
         info2 = retrieve(account2, mode=REALTIME_MODE)
         vector = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
                                  mode=REALTIME_MODE)
-        doc_id = algoModule.store_result(info1, info2, vector)
+        doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
     else:
         doc = score[0]
         doc_id = doc['_id']
         vector = doc['vector']
-    return make_response({'result': vector, 'columns': column_names, 'doc_id': doc_id})
+    # todo: replace with machine learning overall score
+    overall_score = 0.7573
+    return make_response({'result': vector, 'columns': column_names, 'score': overall_score, 'doc_id': doc_id})
 
 
 @app.route('/feedback', methods=["POST"])
