@@ -59,7 +59,7 @@ class ResultPage extends  Component{
         }
         else{
             const jsondata = JSON.parse(data);
-            const {score, columns} = jsondata;
+            const {score, columns, doc_id} = jsondata;
             const vector = flattenObject(jsondata.result);
             return (
                 <div className='resultpage-container'>
@@ -68,7 +68,7 @@ class ResultPage extends  Component{
                     <div className='reaultpage-indicator'>Details: </div>
                     <ul className='resultpage-detaillist-container'>{this.displayRows(columns, vector)}</ul>
                     <div className='reaultpage-indicator'>We believe two accounts are {score >= 0.5 ? null : "not"} belonged to one user.</div>
-                    <Feedback />
+                    <Feedback doc_id={doc_id}/>
                 </div>
             );
         }
