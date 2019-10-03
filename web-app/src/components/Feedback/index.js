@@ -12,10 +12,10 @@ class Feedback extends Component{
     }
 
     recordFeedback = (value) => {
-        const {doc_id} = this.props;
+        const {doc_id, prediction} = this.props;
         const reqdata = {
             doc_id: doc_id,
-            feedback: value ? 1 : 0
+            feedback: value ? prediction : 1 - prediction  // positive => prediction, negative => opposite of prediction
         };
         fetch('http://localhost:5000/feedback', {
             method: 'POST',

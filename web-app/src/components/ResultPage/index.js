@@ -68,7 +68,7 @@ class ResultPage extends  Component{
                     <div className='reaultpage-indicator'>Details: </div>
                     <ul className='resultpage-detaillist-container'>{this.displayRows(columns, vector)}</ul>
                     <div className='reaultpage-indicator'>We believe two accounts are {score >= 0.5 ? null : "not"} belonged to one user.</div>
-                    <Feedback doc_id={doc_id}/>
+                    <Feedback doc_id={doc_id} prediction={score >= 0.5 ? 1 : 0}/>
                 </div>
             );
         }
