@@ -94,7 +94,7 @@ class FlickrUtils(AbstractParser):
         image_property = "https:" + re.findall(r'\(.+\?', soup.find("div", {"class": "avatar"})['style'])[0][1:-1]
         profile['image'] = image_property
         screen_name = soup.find("h1", {"class": "truncate"}).get_text().strip()
-        profile['screen_name'] = screen_name
+        profile['name'] = screen_name
         desc_component = soup.find("div", {"class": "description"})
         if desc_component:
             desc_text = desc_component.get_text()

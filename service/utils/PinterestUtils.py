@@ -43,11 +43,11 @@ def parse_pinterest(username, profile_only=False):
     boards = [(x['name'], x['pin_count']) for x in info['boards']]
 
     if profile_only:
+        user_data = info['profile']
+    else:
         pins = info['pins']
         pin_list = parse_pins(pins)
         user_data = {'profile': info['profile'], 'posts_content': pin_list, 'boards': boards}
-    else:
-        user_data = info['profile']
     return user_data
 
 

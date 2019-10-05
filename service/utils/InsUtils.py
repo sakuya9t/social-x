@@ -57,9 +57,12 @@ class InsUtils(AbstractParser):
         major_script = json.loads(re.findall(r'{\".*}', major_script)[0])
         profile_img = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['profile_pic_url_hd']
 
-        user_info = json.loads(soup.find('script', {'type': 'application/ld+json'}).text.strip())
-        screen_name = user_info['name']
-        desc_str = user_info['description'].replace("\n", ";;") if 'description' in user_info.keys() else ""
+        screen_name = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['full_name']
+        desc_str = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['biography'] or ""
+        desc_str = desc_str.replace("\n", ";;")
+        profile_url = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['external_url']
+        if profile_url:
+            desc_str += profile_url
         return {"username": username, "name": screen_name, "description": desc_str, "image": profile_img}
 
     def parse_posts(self, username):

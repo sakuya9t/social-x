@@ -32,6 +32,13 @@ class InsUtilsTests(unittest.TestCase):
         for item in info['posts_content']:
             self.assertTrue('text' in item.keys() and 'image' in item.keys())
 
+    def test_parse_profile(self):
+        u = InsUtilsNoLogin(displayed=False)
+        info = u.parse_profile('enakorin')
+        print(info)
+        for key in ['username', 'name', 'description', 'image']:
+            self.assertTrue(key in info.keys())
+
 
 if __name__ == '__main__':
     unittest.main()
