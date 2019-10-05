@@ -34,6 +34,7 @@ class SimCalculator:
     def store_result(info1, info2, vector, database):
         database = Couch(database)
         timestamp = calendar.timegm(time.gmtime())
+        # todo: add overall similarity calculation (only) here.
         doc = {'platform1': info1['platform'], 'platform2': info2['platform'],
                'username1': info1['profile']['username'], 'username2': info2['profile']['username'],
                'vector': vector, 'timestamp': timestamp}
@@ -141,7 +142,8 @@ def _info_to_query(info):
 
 
 def query_existing_similarity_in_db(account1, account2):
-    database_order = [DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK, DATABASE_DATA_AWAIT_BATCH]
+    database_order = [DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK,
+                      DATABASE_DATA_AWAIT_BATCH, DATABASE_DATA_AWAIT_BATCH]
     account1 = __format_account_query(account1)
     account2 = __format_account_query(account2)
     selectors = [{'platform1': account1['platform'], 'platform2': account2['platform'],
