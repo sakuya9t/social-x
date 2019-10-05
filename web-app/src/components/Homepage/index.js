@@ -65,6 +65,7 @@ class Homepage extends Component{
             showResult: true,
             waitingResult: true
         }, () => {
+            animateScroll.scrollToBottom();
             fetch('http://localhost:5000/query', {
                 method: 'POST',
                 body: JSON.stringify(reqdata),
@@ -79,7 +80,6 @@ class Homepage extends Component{
                     result: resdata,
                     resultId: resdata.doc_id
                 });
-                animateScroll.scrollToBottom();
             });
         });
     }

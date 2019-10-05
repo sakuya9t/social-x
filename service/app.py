@@ -4,9 +4,10 @@ import flask
 from flask import Flask, request
 from flask_cors import CORS
 
-from constant import REALTIME_MODE, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, \
-    DATABASE_DATA_AWAIT_BATCH
+from automation.batch.batchFeedback import apply_feedback
+from constant import REALTIME_MODE, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, DATABASE_DATA_AWAIT_FEEDBACK
 from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
+from utils import logger
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
@@ -74,8 +75,8 @@ def query():
             info2 = retrieve(account2, mode=REALTIME_MODE)
             vector = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
                                      mode=REALTIME_MODE)
-            doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
-            score = Couch(DATABASE_DATA_AWAIT_BATCH).query({'_id': doc_id})
+            doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
+            score = Couch(DATABASE_DATA_AWAIT_FEEDBACK).query({'_id': doc_id})
         except Exception as e:
             return make_response({'error': True, 'error_message': str(e)})
     doc = score[0]
@@ -100,9 +101,8 @@ def feedback():
             {'result': 'ok'}
     """
     data = json.loads(request.get_data())
-    db = Couch(DATABASE_FEEDBACK)
-    db.insert(data)
-    db.close()
+    logger.info('Received feedback {}.'.format(data))
+    apply_feedback(data)
     return make_response({'result': 'ok'})
 
 

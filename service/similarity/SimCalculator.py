@@ -1,8 +1,7 @@
 import calendar
 import time
 
-from constant import CONFIG_PATH, REALTIME_MODE, ALGOCONFIG_PATH, DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK, \
-    DATABASE_DATA_AWAIT_BATCH
+from constant import CONFIG_PATH, REALTIME_MODE, ALGOCONFIG_PATH, DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK
 from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
@@ -142,8 +141,7 @@ def _info_to_query(info):
 
 
 def query_existing_similarity_in_db(account1, account2):
-    database_order = [DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK,
-                      DATABASE_DATA_AWAIT_BATCH, DATABASE_DATA_AWAIT_BATCH]
+    database_order = [DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK]
     account1 = __format_account_query(account1)
     account2 = __format_account_query(account2)
     selectors = [{'platform1': account1['platform'], 'platform2': account2['platform'],
