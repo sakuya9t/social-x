@@ -13,3 +13,7 @@ class FlickrUtilsTest(unittest.TestCase):
         self.assertTrue('posts_content' in info.keys())
         self.assertTrue('following' in info.keys())
         self.assertTrue('groups' in info.keys())
+
+
+if __name__ == '__main__':
+    unittest.main()

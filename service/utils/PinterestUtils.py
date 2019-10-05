@@ -40,6 +40,7 @@ def parse_pinterest(username, profile_only=False):
     # rename properties to match other platforms
     info['profile']['image'] = info['profile'].pop('image_xlarge_url')
     info['profile']['description'] = info['profile'].pop('about')
+    info['profile']['name'] = info['profile'].pop('full_name')
     boards = [(x['name'], x['pin_count']) for x in info['boards']]
 
     if profile_only:

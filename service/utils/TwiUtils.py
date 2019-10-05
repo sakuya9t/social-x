@@ -73,6 +73,9 @@ class TwiUtils(AbstractParser):
                 err_count += 1
                 logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
                 time.sleep(0.5)
+                if err_count == 10:
+                    self.browser.refresh()
+                    time.sleep(5)
                 if err_count > 20:
                     return None
             self.browser.execute_script("window.scrollBy(0,20000)")
