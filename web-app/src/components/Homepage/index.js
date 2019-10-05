@@ -80,6 +80,16 @@ class Homepage extends Component{
                     result: resdata,
                     resultId: resdata.doc_id
                 });
+            })
+            .catch(_ => {
+                this.setState({
+                    ...this.state,
+                    waitingResult: false,
+                    result: {
+                        error: true,
+                        error_message: '500 Server Internal Error'
+                    }
+                })
             });
         });
     }

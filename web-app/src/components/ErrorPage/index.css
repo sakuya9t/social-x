@@ -1,0 +1,8 @@
+.errorpage-container{
+    height: 100vh;
+    width: fit-content;
+    margin: 0 auto;
+    padding-top: 20vh;
+    text-align: center;
+    font-family: 'Raleway';
+}
