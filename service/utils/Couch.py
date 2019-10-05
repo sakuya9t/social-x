@@ -117,7 +117,7 @@ class Couch:
         for doc in documents:
             del doc['_id']
             del doc['_rev']
-            Couch(target).insert(doc)
+            Couch(target).distinct_insert(doc)
         self.delete(selector)
 
     def query_latest_change(self, selector):
