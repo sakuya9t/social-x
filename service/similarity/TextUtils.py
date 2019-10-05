@@ -17,6 +17,10 @@ import tensorflow_hub as hub
 
 
 class TensorSimilarity:
+    """
+    GUSE text similarity. Have to initialize an instance each time using this.
+    Have to be closed after usage.
+    """
     def __init__(self):
         self.initialize()
 
@@ -29,7 +33,12 @@ class TensorSimilarity:
         self.similarity_message_encodings = embed(self.similarity_input_placeholder)
 
     def similarity(self, msg1, msg2):
-        # GUSE similarity
+        """
+        GUSE similarity of two given strings (semantic similarity)
+        :param msg1: string
+        :param msg2: string
+        :return: a float number between 0 and 1 (both inclusive)
+        """
         messages = (msg1, msg2)
         message_embeddings = self.session.run(
             self.similarity_message_encodings, feed_dict={self.similarity_input_placeholder: messages})
@@ -41,6 +50,11 @@ class TensorSimilarity:
 
 
 def initialize():
+    """
+    A function which downloads libraries required in string tokenization.
+    Have to be called in whole application initialize batch (when installing packages).
+    :return: None
+    """
     import nltk
     nltk.download('wordnet')
     nltk.download('punkt')
@@ -48,6 +62,11 @@ def initialize():
 
 
 def tokenize(text):
+    """
+    Tokenize a given string
+    :param text: string
+    :return: A list of tokens
+    """
     text = text.lower()
     text = re.sub(r'https?://.*[\r\n]*', '', text, flags=re.MULTILINE)
     text = re.sub(r'\d+', '', text)
@@ -67,6 +86,13 @@ def tokenize(text):
 
 
 def similarity(str1, str2, type):
+    """
+    Similarity score calculated by either Jaccard or Sorensen methods.
+    :param str1: string
+    :param str2: string
+    :param type: ['jaccard'|'sorensen']
+    :return: a float number between 0 (inclusive) and 1 (inclusive)
+    """
     tokens_1 = tokenize(str1)
     tokens_2 = tokenize(str2)
     if type == 'jaccard':
@@ -77,6 +103,12 @@ def similarity(str1, str2, type):
 
 
 def singleword_similarity(profile1, profile2):
+    """
+    Get all user names and screen names, find maximum similarity among them.
+    :param profile1: Profile of account 1
+    :param profile2: Profile of account 2
+    :return: Maximum similarity of all possible combination of user name / user displaying names.
+    """
     keys = ['username', 'name', 'screen_name', 'full_name']
     res = -1
     for key1 in keys:
@@ -91,6 +123,12 @@ def singleword_similarity(profile1, profile2):
 
 
 def topics_in_posts(posts):
+    """
+    Find topics that are indicates with hashtag(#). Use this to find out user interest points.
+    Not as good as uClassify.
+    :param posts: string
+    :return: a list of strings, each one is one topic
+    """
     topics = []
     for post in posts:
         if '#' in post:
@@ -100,6 +138,11 @@ def topics_in_posts(posts):
 
 
 def distinct_read(filename):
+    """
+    Read from a file, will remove duplicate lines.
+    :param filename: input file name
+    :return: A list of distinct lines of the file.
+    """
     s = set()
     with open(filename, "r") as file:
         line = file.readline()
@@ -110,9 +153,16 @@ def distinct_read(filename):
 
 
 def jaccard_counter_similarity(counter1, counter2):
-    intersection = sum((counter1 & counter2).values())
+    """
+    Specific implementation of jaccard similarity.
+    -> Not actually used anywhere.
+    :param counter1: Counter
+    :param counter2: Counter
+    :return: float number between 0 and 1 (both inclusive)
+    """
+    _intersection = sum((counter1 & counter2).values())
     union = sum((counter1 | counter2).values())
-    return 0 if union == 0 else intersection / union
+    return 0 if union == 0 else _intersection / union
 
 
 def intersection(lst1, lst2):
@@ -120,10 +170,21 @@ def intersection(lst1, lst2):
 
 
 def extract_urls(text):
+    """
+    Extract urls embedded in given text.
+    :param text: string formatted text possibly have urls inside.
+    :return: A list of urls found in text. If no urls found, return empty array.
+    """
     return [re.sub(r'https?//', '', x.lower()) for x in URLExtract().find_urls(text)]
 
 
 def _get_default_url(platform, username):
+    """
+    Generate the base url of a given username in a given social media.
+    :param platform: Name of social media, all lowercase.
+    :param username: User name of an account, not displaying name.
+    :return: Base url of a given username in a given social media.
+    """
     if platform in ['instagram', 'twitter', 'pinterest']:
         return [x.lower() for x in ['{}.com/{}'.format(platform, username), 'www.{}.com/{}'.format(platform, username),
                 '{}.com/{}/'.format(platform, username), 'www.{}.com/{}/'.format(platform, username)]]
@@ -133,6 +194,12 @@ def _get_default_url(platform, username):
 
 
 def desc_overlap_url(info1, info2):
+    """
+    Find shared urls in self descriptions of both profiles.
+    :param info1: Profile of account 1.
+    :param info2: Profile of account 2.
+    :return: Common URL found in self descriptions of both accounts.
+    """
     url_1 = extract_urls(info1['desc'])
     url_2 = extract_urls(info2['desc'])
     url_1 += _get_default_url(info1['platform'], info1['username'])
