@@ -1,17 +1,17 @@
+import json
+
+import flask
 from flask import Flask, request
 from flask_cors import CORS
-import flask
 
+from constant import REALTIME_MODE, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, \
+    DATABASE_DATA_AWAIT_BATCH
 from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
-import json
-
 from utils.QueryGenerator import retrieve
 from utils.TwiUtils import TwiUtilsWithLogin
-from constant import REALTIME_MODE, DATABASE_QUERY_RESULT, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, \
-    DATABASE_DATA_AWAIT_BATCH
 
 app = Flask(__name__)
 CORS(app)
@@ -69,18 +69,23 @@ def query():
     account2 = data['account2']
     score = query_existing_similarity_in_db(account1, account2)
     if len(score) == 0:
-        info1 = retrieve(account1, mode=REALTIME_MODE)
-        info2 = retrieve(account2, mode=REALTIME_MODE)
-        vector = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
-                                 mode=REALTIME_MODE)
-        doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
-    else:
-        doc = score[0]
-        doc_id = doc['_id']
-        vector = doc['vector']
+        try:
+            info1 = retrieve(account1, mode=REALTIME_MODE)
+            info2 = retrieve(account2, mode=REALTIME_MODE)
+            vector = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
+                                     mode=REALTIME_MODE)
+            doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
+            score = Couch(DATABASE_DATA_AWAIT_BATCH).query({'_id': doc_id})
+        except Exception as e:
+            return make_response({'error': True, 'error_message': str(e)})
+    doc = score[0]
+    doc_id = doc['_id']
+    vector = doc['vector']
     # todo: replace with machine learning overall score
     overall_score = 0.7573
-    return make_response({'result': vector, 'columns': column_names, 'score': overall_score, 'doc_id': doc_id})
+    return make_response({'result': vector, 'columns': column_names,
+                          'score': overall_score, 'doc_id': doc_id,
+                          'error': False})
 
 
 @app.route('/feedback', methods=["POST"])
@@ -88,6 +93,9 @@ def feedback():
     """
         Request format:
             {'doc_id': '5bea4d3efa3646879', 'feedback': 0}
+            feedback: actual label.
+                0: not same user
+                1: same user
         Response format:
             {'result': 'ok'}
     """

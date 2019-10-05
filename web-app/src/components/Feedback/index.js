@@ -12,16 +12,22 @@ class Feedback extends Component{
     }
 
     recordFeedback = (value) => {
-        if(value){
-            console.log('Positive!');
-        }
-        else{
-            console.log('Negative...');
-        }
-        this.setState({
+        const {doc_id, prediction} = this.props;
+        const reqdata = {
+            doc_id: doc_id,
+            feedback: value ? prediction : 1 - prediction  // positive => prediction, negative => opposite of prediction
+        };
+        fetch('http://localhost:5000/feedback', {
+            method: 'POST',
+            body: JSON.stringify(reqdata),
+            headers:{
+                'Content-Type': 'application/json',
+            }
+        }).then(() => this.setState({
             ...this.state,
             rated: true
-        });
+        }));
+        
     }
 
     feedbackArea = <section className="rating-area align-center">

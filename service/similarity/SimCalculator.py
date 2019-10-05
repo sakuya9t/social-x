@@ -30,9 +30,11 @@ class SimCalculator:
         self.semantic_sim = TensorSimilarity()
 
     @staticmethod
+    # store result will run right after calc function.
     def store_result(info1, info2, vector, database):
         database = Couch(database)
         timestamp = calendar.timegm(time.gmtime())
+        # todo: add overall similarity calculation (only) here.
         doc = {'platform1': info1['platform'], 'platform2': info2['platform'],
                'username1': info1['profile']['username'], 'username2': info2['profile']['username'],
                'vector': vector, 'timestamp': timestamp}
@@ -55,12 +57,12 @@ class SimCalculator:
             if len(existing_value) > 0:
                 logger.info('Similarity score already exist, return in REAL TIME MODE....')
                 return existing_value[0]
-        vector = self.vectorize(info1, info2, mode)
+        vector = self.__vectorize(info1, info2, mode)
         if enable_networking:
             vector['network'] = network_sim(info1, info2)
         return vector
 
-    def vectorize(self, info1, info2, mode):
+    def __vectorize(self, info1, info2, mode):
         # todo: handle modes.
         result = {}
         profile1, profile2 = info1['profile'], info2['profile']
@@ -140,7 +142,8 @@ def _info_to_query(info):
 
 
 def query_existing_similarity_in_db(account1, account2):
-    database_order = [DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK, DATABASE_DATA_AWAIT_BATCH]
+    database_order = [DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK,
+                      DATABASE_DATA_AWAIT_BATCH, DATABASE_DATA_AWAIT_BATCH]
     account1 = __format_account_query(account1)
     account2 = __format_account_query(account2)
     selectors = [{'platform1': account1['platform'], 'platform2': account2['platform'],

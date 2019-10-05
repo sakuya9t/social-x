@@ -60,6 +60,12 @@ class Couch:
             qlist.append(doc)
         return qlist
 
+    def query_multiple(self, selectors):
+        qlist = []
+        for selector in selectors:
+            qlist += self.query(selector)
+        return qlist
+
     # insert operation of the database;
     # usage: database.insert(doc);
     # fields: doc -> Dictionary
@@ -77,12 +83,11 @@ class Couch:
     # update operation of the database;
     # usage: database.update(field, old_value, new_value)
     # fields: field -> str; value -> str; new_value -> str
-    def update(self, field, value, new_value):
-        selector = {field: value}
+    def update(self, selector, field, new_value):
         q_res = self.c_db.get_query_result(selector)
         for document in q_res:
-            id = document['_id']
-            doc = Document(self.db, id)
+            doc_id = document['_id']
+            doc = Document(self.db, doc_id)
             doc.update_field(
                 action=doc.field_set,
                 field=field,
@@ -100,6 +105,20 @@ class Couch:
             doc = Document(self.db, id)
             doc['_rev'] = rev
             doc.delete()
+
+    def move_doc(self, selector, target):
+        """
+        Move documents from current database to target database.
+        :param selector: dictionary
+        :param target: string, db name
+        :return:
+        """
+        documents = self.query(selector)
+        for doc in documents:
+            del doc['_id']
+            del doc['_rev']
+            Couch(target).distinct_insert(doc)
+        self.delete(selector)
 
     def query_latest_change(self, selector):
         """

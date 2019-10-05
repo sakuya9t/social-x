@@ -19,7 +19,7 @@ class SimCalculatorTests(unittest.TestCase):
         info2 = retrieve(account2, BATCH_MODE)
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
-        vector = handler.vectorize(info1, info2, BATCH_MODE)
+        vector = handler.calc(info1, info2, enable_networking=False, mode=BATCH_MODE)
         doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
         self.assertIsNotNone(doc_id)
 
@@ -31,7 +31,7 @@ class SimCalculatorTests(unittest.TestCase):
         info2 = retrieve(account2, REALTIME_MODE)
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
-        vector = handler.vectorize(info1, info2, REALTIME_MODE)
+        vector = handler.calc(info1, info2, enable_networking=False, mode=REALTIME_MODE)
         doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
         self.assertIsNotNone(doc_id)
 
