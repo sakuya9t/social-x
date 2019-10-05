@@ -1,6 +1,6 @@
 import unittest
 
-from constant import BATCH_MODE, REALTIME_MODE, DATABASE_DATA_AWAIT_BATCH
+from constant import BATCH_MODE, REALTIME_MODE, DATABASE_DATA_AWAIT_FEEDBACK
 from similarity.SimCalculator import SimCalculator, query_existing_similarity_in_db
 from utils.QueryGenerator import retrieve
 
@@ -20,7 +20,7 @@ class SimCalculatorTests(unittest.TestCase):
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
         vector = handler.calc(info1, info2, enable_networking=False, mode=BATCH_MODE)
-        doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
+        doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
         self.assertIsNotNone(doc_id)
 
     def test_generate_vector_realtime(self):
@@ -32,7 +32,7 @@ class SimCalculatorTests(unittest.TestCase):
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
         vector = handler.calc(info1, info2, enable_networking=False, mode=REALTIME_MODE)
-        doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
+        doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
         self.assertIsNotNone(doc_id)
 
     def test_post_overall_similarity(self):
