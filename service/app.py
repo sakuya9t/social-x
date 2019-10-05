@@ -75,12 +75,12 @@ def query():
             vector = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
                                      mode=REALTIME_MODE)
             doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_BATCH)
+            score = Couch(DATABASE_DATA_AWAIT_BATCH).query({'_id': doc_id})
         except Exception as e:
             return make_response({'error': True, 'error_message': str(e)})
-    else:
-        doc = score[0]
-        doc_id = doc['_id']
-        vector = doc['vector']
+    doc = score[0]
+    doc_id = doc['_id']
+    vector = doc['vector']
     # todo: replace with machine learning overall score
     overall_score = 0.7573
     return make_response({'result': vector, 'columns': column_names,
@@ -93,6 +93,9 @@ def feedback():
     """
         Request format:
             {'doc_id': '5bea4d3efa3646879', 'feedback': 0}
+            feedback: actual label.
+                0: not same user
+                1: same user
         Response format:
             {'result': 'ok'}
     """
