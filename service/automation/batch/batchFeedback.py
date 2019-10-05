@@ -18,12 +18,12 @@ def apply_feedback(item):
     db_name = DATABASE_DATA_AWAIT_FEEDBACK
     stored_records = Couch(db_name).query(selector)
     if stored_records:
-        logger.info('Batching doc id {} in table {}.'.format(selector['_id'], db_name))
+        logger.info('Applying feedback to doc id {} in table {}.'.format(selector['_id'], db_name))
         item = stored_records[0]
         item['vector']['label'] = label
         Couch(db_name).update(selector, 'vector', item['vector'])
         Couch(db_name).move_doc(selector, DATABASE_LABELED_DATA)
-        logger.info('Batching doc id {} in table {} finished.'.format(selector['_id'], db_name))
+        logger.info('Applying feedback to doc id {} in table {} completed.'.format(selector['_id'], db_name))
 
 
 if __name__ == '__main__':
