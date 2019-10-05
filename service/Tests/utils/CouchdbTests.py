@@ -78,6 +78,25 @@ class CouchdbTests(unittest.TestCase):
         query_result = db.query(selector)
         self.assertEqual(0, len(query_result))
 
+    def test_update(self):
+        obj = {"abc": "1234", "def": {"abc": "4567"}}
+        db = Couch('test')
+        doc_id = db.distinct_insert(obj)
+        selector = {'_id': doc_id}
+        Couch('test').update(selector, 'def', {"abc": "5678"})
+        res = Couch('test').query(selector)
+        for item in res:
+            self.assertEqual(item['def'], {"abc": "5678"})
+
+    def test_move_doc(self):
+        obj = {"i": "tomove"}
+        db = Couch('test')
+        doc_id = db.distinct_insert(obj)
+        selector = {'_id': doc_id}
+        Couch('test').move_doc(selector, 'test2')
+        query_result = Couch('test2').query(obj)
+        self.assertTrue(len(query_result) > 0)
+
 
 if __name__ == '__main__':
     unittest.main()
