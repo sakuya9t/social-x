@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 from tensorflow.python.keras.models import model_from_json
 
+from similarity.Config import Config
 from utils import logger
 from tensorflow import keras
-from constant import REALTIME_MODE, BATCH_MODE, DATABASE_LABELED_DATA, MODEL_FILE_BASE_PATH
+from constant import REALTIME_MODE, BATCH_MODE, DATABASE_LABELED_DATA, MODEL_FILE_BASE_PATH, ALGOCONFIG_PATH
 from utils.Couch import Couch
 
 EPOCHS = 1000
@@ -117,15 +118,21 @@ class PrintDot(keras.callbacks.Callback):
         print('.', end='')
 
 
-def export_model(model):
-    model_json = model.to_json(indent=2)
+def _generate_model_name(mode):
     date_str = date.today().strftime('%y%m%d')
-    jsonfile_path = MODEL_FILE_BASE_PATH + "model{}.json".format(date_str)
-    h5file_path = MODEL_FILE_BASE_PATH + "model{}.h5".format(date_str)
+    return "model_{}{}".format('realtime' if mode == REALTIME_MODE else 'batch', date_str)
+
+
+def export_model(model, mode):
+    model_json = model.to_json(indent=2)
+    model_name = _generate_model_name(mode)
+    jsonfile_path = MODEL_FILE_BASE_PATH + model_name + ".json"
+    h5file_path = MODEL_FILE_BASE_PATH + model_name + ".h5"
     with open(jsonfile_path, "w") as json_file:
         json_file.write(model_json)
     model.save_weights(h5file_path)
-    logger.info("Saved model to disk, files: {}, {}.".format(jsonfile_path, h5file_path))
+    logger.info("Exporting model {} completed.".format(model_name))
+    return model_name
 
 
 def import_model(model_name):
@@ -142,3 +149,17 @@ def import_model(model_name):
                    metrics=['mae', 'mse'])
     logger.info("Successfully loaded model {}.".format(model_name))
     return _model
+
+
+def upgrade_model_batch():
+    enable_crossfeature = Config(ALGOCONFIG_PATH).get('enable-cross-feature')
+    _model = generate_model(REALTIME_MODE, cross_features=enable_crossfeature)
+    model_name = export_model(_model, REALTIME_MODE)
+    Config(ALGOCONFIG_PATH).set('model-name/realtime', model_name)
+    _model = generate_model(BATCH_MODE, cross_features=enable_crossfeature)
+    model_name = export_model(_model, BATCH_MODE)
+    Config(ALGOCONFIG_PATH).set('model-name/batch', model_name)
+
+
+if __name__ == '__main__':
+    upgrade_model_batch()
