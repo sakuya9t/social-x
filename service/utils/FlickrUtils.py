@@ -62,7 +62,7 @@ class FlickrUtils(AbstractParser):
         return image_urls
 
     def get_post_content(self, url):
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         soup = BeautifulSoup(data)
         image = 'https:' + soup.find("img", {"class": "main-photo"})['src']

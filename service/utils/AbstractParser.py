@@ -1,7 +1,9 @@
 import os
+import requests
 from multiprocessing.pool import ThreadPool
 
 import psutil as psutil
+from fake_useragent import UserAgent
 
 THREAD_POOL_SIZE = 20
 
@@ -33,3 +35,10 @@ class AbstractParser:
         pool = ThreadPool(THREAD_POOL_SIZE)
         results = pool.map(callback, urls)
         return results
+
+    @staticmethod
+    def get_url(url):
+        ua = UserAgent()
+        header = {'User-Agent': str(ua.chrome)}
+        content = requests.get(url, headers=header)
+        return content

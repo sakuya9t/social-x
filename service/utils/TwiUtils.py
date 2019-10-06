@@ -27,13 +27,13 @@ class TwiUtils(AbstractParser):
 
     def isSuspendedOrInvalid(self, username):
         url = "https://www.twitter.com/" + username
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         return "Account suspended" in data or "that page doesn’t exist" in data
 
     def isProtectedOrEmpty(self, username):
         url = "https://www.twitter.com/" + username
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         return "This account's Tweets are protected." in data or "hasn't Tweeted" in data
 
@@ -98,7 +98,7 @@ class TwiUtils(AbstractParser):
         return post_urls
 
     def get_post_content(self, url):
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         soup = BeautifulSoup(data)
         desc_element = soup.find('meta', {'property': 'og:description'})
@@ -113,7 +113,7 @@ class TwiUtilsNoLogin(TwiUtils):
         if self.isSuspendedOrInvalid(username):
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         url = "https://www.twitter.com/" + username
-        response = requests.get(url)
+        response = self.get_url(url)
         data = response.text
         soup = BeautifulSoup(data)
         self_desc_ele = soup.find('p', {'class': 'ProfileHeaderCard-bio'})
@@ -127,7 +127,7 @@ class TwiUtilsNoLogin(TwiUtils):
         url_ele = soup.find('span', {'class': 'ProfileHeaderCard-urlText'}).find('a')
         conn_url = url_ele['title'] if url_ele else ""
         img_ele = soup.find('img', {'class': 'ProfileAvatar-image'})
-        profile_img = img_ele['src'] if img_ele else ""
+        profile_img = img_ele.text if img_ele else ""
         return {"username": screen_name, "name": name, "description": self_desc, "location": location, "url": conn_url,
                 "image": profile_img}
 

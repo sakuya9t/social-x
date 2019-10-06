@@ -1,7 +1,7 @@
-from bs4 import BeautifulSoup
-import requests
-from multiprocessing.dummy import Pool as ThreadPool
 import json
+from multiprocessing.dummy import Pool as ThreadPool
+
+from bs4 import BeautifulSoup
 
 from utils.AbstractParser import AbstractParser
 
@@ -12,7 +12,7 @@ THREAD_POOL_SIZE = 20
 def get_pin_annotation(pin):
     try:
         url = pin['url']
-        resp = requests.get(url)
+        resp = PinterestUtils().get_url(url)
         data = resp.text
         soup = BeautifulSoup(data)
         info = json.loads(soup.find("script", {"id": "initial-state"}).get_text())
@@ -31,7 +31,7 @@ def get_pin_annotation_parallel(pins):
 
 def parse_pinterest(username, profile_only=False):
     url = "https://www.pinterest.com/{}".format(username)
-    resp = requests.get(url)
+    resp = PinterestUtils().get_url(url)
     data = resp.text
     soup = BeautifulSoup(data)
 
