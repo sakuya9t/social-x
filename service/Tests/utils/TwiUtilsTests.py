@@ -36,6 +36,10 @@ class TwiUtilsTests(unittest.TestCase):
         with self.assertRaises(InvalidAccountException):
             u.parse('enako_cos334455')
         u.close()
+        u = TwiUtilsNoLogin()
+        with self.assertRaises(InvalidAccountException):
+            u.parse('greatone9')
+        u.close()
 
 
 if __name__ == '__main__':

@@ -1,15 +1,13 @@
-import requests
-from bs4 import BeautifulSoup
-
-from selenium import webdriver
-
-import selenium
-from selenium.webdriver.chrome.options import Options
 import time
 
+import selenium
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+from constant import DRIVER_PATH
 from utils import logger
 from utils.AbstractParser import AbstractParser
-from constant import DRIVER_PATH
 from utils.InvalidAccountException import InvalidAccountException
 
 THREAD_POOL_SIZE = 20
@@ -29,7 +27,7 @@ class TwiUtils(AbstractParser):
         url = "https://www.twitter.com/" + username
         resp = self.get_url(url)
         data = resp.text
-        return "Account suspended" in data or "that page doesn’t exist" in data
+        return "This account has been suspended" in data or "that page doesn’t exist" in data
 
     def isProtectedOrEmpty(self, username):
         url = "https://www.twitter.com/" + username
