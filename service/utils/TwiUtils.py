@@ -160,15 +160,3 @@ class TwiUtilsWithLogin(TwiUtils):
         submit_button.click()
         time.sleep(3)
         return "login" not in self.browser.current_url
-
-    def getPhoto(self, username):
-        url = "https://www.twitter.com/" + username
-        self.browser.get(url)
-        time.sleep(3)
-        query_href = "[href=\"/{name}/photo\"]".format(name=username)
-        try:
-            image_element = self.browser.find_element_by_css_selector(query_href)
-            img_url = image_element.find_elements_by_tag_name("img")[0].get_attribute("src")
-            return img_url
-        except:
-            return ""
