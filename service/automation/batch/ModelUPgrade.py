@@ -1,15 +1,19 @@
+from datetime import date
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+from tensorflow.python.keras.models import model_from_json
+
 from utils import logger
 from tensorflow import keras
-from constant import REALTIME_MODE, BATCH_MODE, DATABASE_LABELED_DATA
+from constant import REALTIME_MODE, BATCH_MODE, DATABASE_LABELED_DATA, MODEL_FILE_BASE_PATH
 from utils.Couch import Couch
 
 EPOCHS = 1000
 
 
-def get_model_from_database(mode, cross_features=False):
+def generate_model(mode, cross_features=False):
     def norm(x):
         return (x - train_stats['mean']) / train_stats['std']
 
@@ -111,3 +115,30 @@ class PrintDot(keras.callbacks.Callback):
         if epoch % 100 == 0:
             print('')
         print('.', end='')
+
+
+def export_model(model):
+    model_json = model.to_json(indent=2)
+    date_str = date.today().strftime('%y%m%d')
+    jsonfile_path = MODEL_FILE_BASE_PATH + "model{}.json".format(date_str)
+    h5file_path = MODEL_FILE_BASE_PATH + "model{}.h5".format(date_str)
+    with open(jsonfile_path, "w") as json_file:
+        json_file.write(model_json)
+    model.save_weights(h5file_path)
+    logger.info("Saved model to disk, files: {}, {}.".format(jsonfile_path, h5file_path))
+
+
+def import_model(model_name):
+    jsonfile_path = MODEL_FILE_BASE_PATH + "{}.json".format(model_name)
+    h5file_path = MODEL_FILE_BASE_PATH + "{}.h5".format(model_name)
+    json_file = open(jsonfile_path, 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    _model = model_from_json(loaded_model_json)
+    _model.load_weights(h5file_path)
+    optimizer = tf.keras.optimizers.RMSprop(0.001)
+    _model.compile(loss='mse',
+                   optimizer=optimizer,
+                   metrics=['mae', 'mse'])
+    logger.info("Successfully loaded model {}.".format(model_name))
+    return _model

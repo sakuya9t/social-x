@@ -14,3 +14,5 @@ DATABASE_FEEDBACK = 'feedback'
 DATABASE_CREDENTIAL = 'credential'
 DATABASE_LABELED_DATA = 'similarity'
 DATABASE_DATA_AWAIT_FEEDBACK = 'query_to_process'
+
+MODEL_FILE_BASE_PATH = os.path.join(ROOT_DIR, 'model/')
