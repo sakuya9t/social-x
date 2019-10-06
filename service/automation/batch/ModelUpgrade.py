@@ -14,24 +14,26 @@ from utils.Couch import Couch
 EPOCHS = 1000
 
 
+def norm(x, train_stats):
+    return (x - train_stats['mean']) / train_stats['std']
+
+
+def build_model(train_dataset):
+    _model = keras.Sequential([
+        keras.layers.Dense(64, activation='relu', input_shape=[len(train_dataset.keys())]),
+        keras.layers.Dense(64, activation='relu'),
+        keras.layers.Dense(1)
+    ])
+
+    optimizer = tf.keras.optimizers.RMSprop(0.001)
+
+    _model.compile(loss='mse',
+                   optimizer=optimizer,
+                   metrics=['mae', 'mse'])
+    return _model
+
+
 def generate_model(mode, cross_features=False):
-    def norm(x):
-        return (x - train_stats['mean']) / train_stats['std']
-
-    def build_model():
-        _model = keras.Sequential([
-            keras.layers.Dense(64, activation='relu', input_shape=[len(train_dataset.keys())]),
-            keras.layers.Dense(64, activation='relu'),
-            keras.layers.Dense(1)
-        ])
-
-        optimizer = tf.keras.optimizers.RMSprop(0.001)
-
-        _model.compile(loss='mse',
-                       optimizer=optimizer,
-                       metrics=['mae', 'mse'])
-        return _model
-
     logger.info('Start generating model in {} mode.'.format('REALTIME' if mode == REALTIME_MODE else 'BATCH'))
     logger.info('Production of features {}.'.format('enabled' if cross_features else 'disabled'))
     items = Couch(DATABASE_LABELED_DATA).query_all()
@@ -77,14 +79,16 @@ def generate_model(mode, cross_features=False):
     train_stats = train_dataset.describe()
     train_stats.pop("label")
     train_stats = train_stats.transpose()
+    export_stats(train_stats)
+    logger.info('Exported training stats.')
 
     train_labels = train_dataset.pop('label')
     test_labels = test_dataset.pop('label')
 
-    normed_train_data = norm(train_dataset)
-    normed_test_data = norm(test_dataset)
+    normed_train_data = norm(train_dataset, train_stats)
+    normed_test_data = norm(test_dataset, train_stats)
 
-    model = build_model()
+    model = build_model(train_dataset)
 
     early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
     logger.info('Training...')
@@ -109,6 +113,22 @@ def generate_model(mode, cross_features=False):
     logger.info("Precision: {:5.4f}, Recall: {:5.4f}, F1-score: {:5.4f}".format(precision, recall, f1))
 
     return model
+
+
+def export_stats(stats):
+    json_data = stats.to_json()
+    date_str = date.today().strftime('%y%m%d')
+    filename = MODEL_FILE_BASE_PATH + "stats{}.json".format(date_str)
+    Config(ALGOCONFIG_PATH).set('model-name/train-stats', "stats{}.json".format(date_str))
+    with open(filename, "w") as json_file:
+        json_file.write(json_data)
+
+
+def import_stats(filename):
+    json_file = open(filename, 'r')
+    data = json_file.read()
+    json_file.close()
+    return pd.read_json(data)
 
 
 class PrintDot(keras.callbacks.Callback):

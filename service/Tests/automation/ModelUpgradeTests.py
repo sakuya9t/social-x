@@ -1,10 +1,11 @@
 import unittest
 from datetime import date
 import os
+import pandas as pd
 
 from tensorflow.python.keras import Sequential
 
-from automation.batch.ModelUPgrade import generate_model, export_model, import_model, upgrade_model_batch
+from automation.batch.ModelUpgrade import generate_model, export_model, import_model, upgrade_model_batch, import_stats
 from constant import BATCH_MODE, REALTIME_MODE, MODEL_FILE_BASE_PATH
 
 
@@ -45,6 +46,11 @@ class ModelUpgradeTests(unittest.TestCase):
 
     def test_batch(self):
         upgrade_model_batch()
+
+    def test_import_stats(self):
+        filename = MODEL_FILE_BASE_PATH + "stats191006.json"
+        stats = import_stats(filename)
+        self.assertTrue(isinstance(stats, pd.DataFrame))
 
 
 if __name__ == '__main__':
