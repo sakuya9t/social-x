@@ -1,7 +1,7 @@
 import unittest
 from collections import Counter
 
-from similarity.TextUtils import jaccard_counter_similarity, singleword_similarity, desc_overlap_url
+from similarity.TextUtils import jaccard_counter_similarity, singleword_similarity, desc_overlap_url, TensorSimilarity
 
 
 class TextUtilsTests(unittest.TestCase):
@@ -866,6 +866,14 @@ class TextUtilsTests(unittest.TestCase):
         info2 = {'platform': 'twitter', 'username': 'Biscuit_Boom',
                  'desc': 'We are a quirky and fun event planning compat'}
         self.assertEqual(0, desc_overlap_url(info1, info2))
+
+    def test_tensor_similarity(self):
+        text1 = "I am working with the tensorflow-implementation from Keras and I can use it without issues, however, my IDE thinks that the keras submodule in tf does not exist."
+        text2 = "I am using anaconda where I install tensorflow and all my other libraries."
+        u = TensorSimilarity()
+        sim = u.similarity(text1, text2)
+        u.close()
+        self.assertTrue(0 <= sim <= 1)
 
 
 if __name__ == '__main__':

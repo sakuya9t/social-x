@@ -32,11 +32,9 @@ class SimCalculator:
     # store result will run right after calc function.
     def store_result(info1, info2, vector, database):
         database = Couch(database)
-        timestamp = calendar.timegm(time.gmtime())
-        # todo: add overall similarity calculation (only) here.
         doc = {'platform1': info1['platform'], 'platform2': info2['platform'],
                'username1': info1['profile']['username'], 'username2': info2['profile']['username'],
-               'vector': vector, 'timestamp': timestamp}
+               'vector': vector}
         logger.info('Storing result: {}'.format(doc))
         doc_id = database.distinct_insert(_convert_float(doc))
         database.close()

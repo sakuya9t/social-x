@@ -2,15 +2,15 @@ import unittest
 
 from utils import InsUtils, TwiUtils, PinterestUtils, FlickrUtils
 from utils.Couch import Couch
-from utils.QueryGenerator import generate_query, factory, retrieve
+from utils.QueryGenerator import generate_query, factory, retrieve, execute_query
 from constant import REALTIME_MODE, BATCH_MODE
 
 
 class QueryGeneratorTests(unittest.TestCase):
     def test_generate_query(self):
-        account = {'platform': 'Instagram', 'account': 'beckaa_lee'}
+        account = {'platform': 'Twitter', 'account': 'kpets17'}
         query = generate_query(account)
-        self.assertEqual({"database": 'instagram', "selector": {"username": 'beckaa_lee'}}, query)
+        self.assertEqual({'database': 'twitter', 'selector': {'profile': {'username': '@kpets17'}}}, query)
 
     def test_factory_insta(self):
         instance = factory('instagram')

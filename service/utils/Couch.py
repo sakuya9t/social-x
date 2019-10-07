@@ -1,3 +1,6 @@
+import calendar
+import time
+
 from cloudant.client import CouchDB
 from cloudant.database import CloudantDatabase
 from cloudant.database import CouchDatabase
@@ -70,6 +73,7 @@ class Couch:
     # usage: database.insert(doc);
     # fields: doc -> Dictionary
     def insert(self, doc):
+        doc['timestamp'] = _timestamp()
         document = self.db.create_document(doc)
         if document.exists():
             return document['_id']
@@ -92,6 +96,11 @@ class Couch:
                 action=doc.field_set,
                 field=field,
                 value=new_value
+            )
+            doc.update_field(
+                action=doc.field_set,
+                field='timestamp',
+                value=_timestamp()
             )
 
     # delete operation of the database;
@@ -151,3 +160,7 @@ def _restore_float(obj):
             except ValueError:
                 pass
     return obj
+
+
+def _timestamp():
+    return calendar.timegm(time.gmtime())
