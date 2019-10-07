@@ -23,7 +23,7 @@ class ModelUpgradeTests(unittest.TestCase):
         model = generate_model(REALTIME_MODE, cross_features=True)
 
     def test_export_model_realtime(self):
-        enable_crossfeature = True
+        enable_crossfeature = False
         model = generate_model(REALTIME_MODE, cross_features=enable_crossfeature)
         export_model(model, REALTIME_MODE, enable_crossfeature)
         date_str = date.today().strftime('%y%m%d')
@@ -32,7 +32,7 @@ class ModelUpgradeTests(unittest.TestCase):
         self.assertTrue(os.path.exists(jsonfile_path) and os.path.exists(h5file_path))
 
     def test_export_model_batch(self):
-        enable_crossfeature = True
+        enable_crossfeature = False
         model = generate_model(BATCH_MODE, cross_features=enable_crossfeature)
         export_model(model, BATCH_MODE, enable_crossfeature)
         date_str = date.today().strftime('%y%m%d')
