@@ -6,6 +6,7 @@ from flask_cors import CORS
 
 from automation.batch.batchFeedback import apply_feedback
 from constant import REALTIME_MODE, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, DATABASE_DATA_AWAIT_FEEDBACK
+from similarity.OverallSimilarityCalculator import OverallSimilarityCalculator
 from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
 from utils import logger
 from utils.Couch import Couch
@@ -78,14 +79,14 @@ def query():
             doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
             score = Couch(DATABASE_DATA_AWAIT_FEEDBACK).query({'_id': doc_id})
         except Exception as e:
+            logger.error(e)
             return make_response({'error': True, 'error_message': str(e)})
     doc = score[0]
     doc_id = doc['_id']
     vector = doc['vector']
-    # todo: replace with machine learning overall score
-    overall_score = 0.7573
+    overall_score = OverallSimilarityCalculator().calc(doc)
     return make_response({'result': vector, 'columns': column_names,
-                          'score': overall_score, 'doc_id': doc_id,
+                          'score': str(overall_score), 'doc_id': doc_id,
                           'error': False})
 
 

@@ -74,6 +74,7 @@ class Homepage extends Component{
                 }
             }).then(res => res.json())
             .then(resdata => {
+                resdata.score = parseFloat(resdata.score);
                 this.setState({
                     ...this.state,
                     waitingResult: false,

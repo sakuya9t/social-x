@@ -2,6 +2,9 @@ import os
 from multiprocessing.pool import ThreadPool
 
 import psutil as psutil
+import requests
+
+from constant import USER_AGENT
 
 THREAD_POOL_SIZE = 20
 
@@ -16,7 +19,7 @@ class AbstractParser:
         pass
 
     def close(self):
-        if self.browser:
+        if self.browser and self.browser.service.process:
             browser_pid = self.browser.service.process.pid
             p = psutil.Process(browser_pid)
             pids = [sub.pid for sub in p.children(recursive=True)]
@@ -33,3 +36,9 @@ class AbstractParser:
         pool = ThreadPool(THREAD_POOL_SIZE)
         results = pool.map(callback, urls)
         return results
+
+    @staticmethod
+    def get_url(url):
+        header = {'User-Agent': USER_AGENT}
+        content = requests.get(url, headers=header)
+        return content

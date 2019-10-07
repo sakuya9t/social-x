@@ -30,19 +30,20 @@ class InsUtils(AbstractParser):
 
     def is_invalid(self, username):
         url = "https://www.instagram.com/" + username
-        response = requests.get(url)
+        response = self.get_url(url)
         soup = BeautifulSoup(response.text)
         target_ele = soup.find_all('meta', {'property': 'og:title'})
         return len(target_ele) == 0
 
     def is_private_or_protected(self, username):
         url = "https://www.instagram.com/" + username
-        response = requests.get(url)
+        response = self.get_url(url)
         soup = BeautifulSoup(response.text)
         major_script = list(filter(lambda x: 'window._sharedData = ' in x.text, soup.find_all('script')))[0].text
         major_script = json.loads(re.findall(r'{\".*}', major_script)[0])
         is_private = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['is_private']
-        is_empty = len(major_script['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['edges']) == 0
+        is_empty = len(major_script['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media'][
+                           'edges']) == 0
         return is_private or is_empty
 
     def parse_profile(self, username):
@@ -51,15 +52,18 @@ class InsUtils(AbstractParser):
         if self.is_invalid(username):
             raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
 
-        response = requests.get('https://www.instagram.com/{}/'.format(username))
+        response = requests.get('https://www.instagram.com/{}/'.format(username), allow_redirects=False)
         soup = BeautifulSoup(response.text)
         major_script = list(filter(lambda x: 'window._sharedData = ' in x.text, soup.find_all('script')))[0].text
         major_script = json.loads(re.findall(r'{\".*}', major_script)[0])
         profile_img = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['profile_pic_url_hd']
 
-        user_info = json.loads(soup.find('script', {'type': 'application/ld+json'}).text.strip())
-        screen_name = user_info['name']
-        desc_str = user_info['description'].replace("\n", ";;") if 'description' in user_info.keys() else ""
+        screen_name = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['full_name']
+        desc_str = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['biography'] or ""
+        desc_str = desc_str.replace("\n", ";;")
+        profile_url = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['external_url']
+        if profile_url:
+            desc_str += profile_url
         return {"username": username, "name": screen_name, "description": desc_str, "image": profile_img}
 
     def parse_posts(self, username):
@@ -92,7 +96,7 @@ class InsUtils(AbstractParser):
         return a_hrefs[:500]
 
     def get_post_content(self, url):
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         soup = BeautifulSoup(data)
         text = soup.find_all("title")[0].get_text()
@@ -162,7 +166,8 @@ class InsUtilsWithLogin(InsUtils):
         names = sub_window_container.find_elements_by_css_selector("[title]")
         for name in names:
             follow_list.add(name.get_attribute("innerText"))
-        close_button = self.browser.find_element_by_css_selector("[role=\"dialog\"]").find_elements_by_tag_name("button")[0]
+        close_button = \
+        self.browser.find_element_by_css_selector("[role=\"dialog\"]").find_elements_by_tag_name("button")[0]
         close_button.click()
         return list(follow_list)
 
@@ -195,14 +200,13 @@ class InsUtilsWithLogin(InsUtils):
         posts_content = self.multi_thread_parse(callback=self.get_post_content, urls=posts_urls)
         return {"profile": profile, "following": following, "posts_content": posts_content}
 
-
-def find_post_owner(url):
-    resp = requests.get(url)
-    data = resp.text
-    soup = BeautifulSoup(data)
-    text = soup.find_all("script", {"type": "application/ld+json"})[0].text
-    username = ast.literal_eval(re.sub(r'[\n ]', "", text))['author']['alternateName'].replace('@', '')
-    return username
+    def find_post_owner(self, url):
+        resp = self.get_url(url)
+        data = resp.text
+        soup = BeautifulSoup(data)
+        text = soup.find_all("script", {"type": "application/ld+json"})[0].text
+        username = ast.literal_eval(re.sub(r'[\n ]', "", text))['author']['alternateName'].replace('@', '')
+        return username
 
 
 def is_valid_instagram_data(content):

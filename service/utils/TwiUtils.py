@@ -1,15 +1,13 @@
-import requests
-from bs4 import BeautifulSoup
-
-from selenium import webdriver
-
-import selenium
-from selenium.webdriver.chrome.options import Options
 import time
 
+import selenium
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+from constant import DRIVER_PATH
 from utils import logger
 from utils.AbstractParser import AbstractParser
-from constant import DRIVER_PATH
 from utils.InvalidAccountException import InvalidAccountException
 
 THREAD_POOL_SIZE = 20
@@ -27,13 +25,13 @@ class TwiUtils(AbstractParser):
 
     def isSuspendedOrInvalid(self, username):
         url = "https://www.twitter.com/" + username
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
-        return "Account suspended" in data or "that page doesn’t exist" in data
+        return "This account has been suspended" in data or "that page doesn’t exist" in data
 
     def isProtectedOrEmpty(self, username):
         url = "https://www.twitter.com/" + username
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         return "This account's Tweets are protected." in data or "hasn't Tweeted" in data
 
@@ -73,6 +71,9 @@ class TwiUtils(AbstractParser):
                 err_count += 1
                 logger.warning("Exception happened: {}, retrying {}/20...".format(ex, err_count))
                 time.sleep(0.5)
+                if err_count == 10:
+                    self.browser.refresh()
+                    time.sleep(5)
                 if err_count > 20:
                     return None
             self.browser.execute_script("window.scrollBy(0,20000)")
@@ -95,7 +96,7 @@ class TwiUtils(AbstractParser):
         return post_urls
 
     def get_post_content(self, url):
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         soup = BeautifulSoup(data)
         desc_element = soup.find('meta', {'property': 'og:description'})
@@ -110,7 +111,7 @@ class TwiUtilsNoLogin(TwiUtils):
         if self.isSuspendedOrInvalid(username):
             raise InvalidAccountException('Invalid Twitter Account {}'.format(username))
         url = "https://www.twitter.com/" + username
-        response = requests.get(url)
+        response = self.get_url(url)
         data = response.text
         soup = BeautifulSoup(data)
         self_desc_ele = soup.find('p', {'class': 'ProfileHeaderCard-bio'})
@@ -159,15 +160,3 @@ class TwiUtilsWithLogin(TwiUtils):
         submit_button.click()
         time.sleep(3)
         return "login" not in self.browser.current_url
-
-    def getPhoto(self, username):
-        url = "https://www.twitter.com/" + username
-        self.browser.get(url)
-        time.sleep(3)
-        query_href = "[href=\"/{name}/photo\"]".format(name=username)
-        try:
-            image_element = self.browser.find_element_by_css_selector(query_href)
-            img_url = image_element.find_elements_by_tag_name("img")[0].get_attribute("src")
-            return img_url
-        except:
-            return ""
