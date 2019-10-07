@@ -7,7 +7,7 @@ enable_crossfeature = Config(ALGOCONFIG_PATH).get('enable-cross-feature')
 
 
 class OverallSimilarityCalculator:
-    def calc(self, data, mode):
+    def _calc(self, data, mode):
         model_name = Config(ALGOCONFIG_PATH).get('model-name/{}'.format(mode_name[mode]))
         stat_path = MODEL_FILE_BASE_PATH + Config(ALGOCONFIG_PATH).get(
             'model-name/train-stats/{}'.format(mode_name[mode]))
@@ -21,3 +21,13 @@ class OverallSimilarityCalculator:
         normed_test_data = norm(test_set, train_stats)
         test_predictions = model.predict(normed_test_data).flatten()
         return test_predictions[0]
+
+    def calc(self, data):
+        if has_full_property(data):
+            return self._calc(data, BATCH_MODE)
+        return self._calc(data, REALTIME_MODE)
+
+
+def has_full_property(data):
+    vector = data['vector']
+    return 'post_text' in vector.keys()
