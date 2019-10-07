@@ -138,7 +138,10 @@ def export_stats(stats, mode, enable_crossfeature):
     json_data = stats.to_json()
     stat_name = _generate_stat_name(mode, enable_crossfeature)
     filename = MODEL_FILE_BASE_PATH + "{}.json".format(stat_name)
-    Config(ALGOCONFIG_PATH).set('model-name/train-stats', "{}.json".format(stat_name))
+    if mode == REALTIME_MODE:
+        Config(ALGOCONFIG_PATH).set('model-name/train-stats/realtime', "{}.json".format(stat_name))
+    else:
+        Config(ALGOCONFIG_PATH).set('model-name/train-stats/batch', "{}.json".format(stat_name))
     with open(filename, "w") as json_file:
         json_file.write(json_data)
 
@@ -147,6 +150,7 @@ def import_stats(filename):
     json_file = open(filename, 'r')
     data = json_file.read()
     json_file.close()
+    logger.info('Loaded stats {}.'.format(filename))
     return pd.read_json(data)
 
 

@@ -2,18 +2,19 @@ from automation.batch.ModelUpgrade import import_model, import_stats, generate_d
 from constant import ALGOCONFIG_PATH, BATCH_MODE, REALTIME_MODE, MODEL_FILE_BASE_PATH
 from similarity.Config import Config
 
-
 mode_name = {BATCH_MODE: 'batch', REALTIME_MODE: 'realtime'}
 enable_crossfeature = Config(ALGOCONFIG_PATH).get('enable-cross-feature')
 
 
 class OverallSimilarityCalculator:
-    def calc(self, vector, mode):
+    def calc(self, data, mode):
         model_name = Config(ALGOCONFIG_PATH).get('model-name/{}'.format(mode_name[mode]))
-        stat_path = MODEL_FILE_BASE_PATH + Config(ALGOCONFIG_PATH).get('model-name/train-stats')
+        stat_path = MODEL_FILE_BASE_PATH + Config(ALGOCONFIG_PATH).get(
+            'model-name/train-stats/{}'.format(mode_name[mode]))
         model = import_model(model_name)
         train_stats = import_stats(stat_path)
-        feature_vectors = generate_feature_vectors(items=[vector], mode=mode, cross_features=enable_crossfeature)
+        data['vector']['label'] = -1
+        feature_vectors = generate_feature_vectors(items=[data], mode=mode, cross_features=enable_crossfeature)
         test_set = generate_dataset(data_list=feature_vectors, mode=mode,
                                     cross_features=enable_crossfeature)
         test_set.pop('label')
