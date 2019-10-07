@@ -60,7 +60,6 @@ class ResultPage extends  Component{
         }
         else{
             const jsondata = JSON.parse(data);
-            console.log(jsondata);
             if(jsondata.error){
                 return <ErrorPage message={jsondata.error_message}/>
             }
