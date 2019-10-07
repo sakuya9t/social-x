@@ -125,7 +125,7 @@ class TwiUtilsNoLogin(TwiUtils):
         url_ele = soup.find('span', {'class': 'ProfileHeaderCard-urlText'}).find('a')
         conn_url = url_ele['title'] if url_ele else ""
         img_ele = soup.find('img', {'class': 'ProfileAvatar-image'})
-        profile_img = img_ele.text if img_ele else ""
+        profile_img = img_ele['src'] if img_ele else ""
         return {"username": screen_name, "name": name, "description": self_desc, "location": location, "url": conn_url,
                 "image": profile_img}
 

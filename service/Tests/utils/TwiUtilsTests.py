@@ -13,6 +13,12 @@ class TwiUtilsTests(unittest.TestCase):
         for item in info['posts_content']:
             self.assertTrue('text' in item.keys() and 'image' in item.keys())
 
+    def test_parse_profile(self):
+        u = TwiUtilsNoLogin()
+        info = u.parse_profile('@enako_cos')
+        u.close()
+        print(info)
+
     def test_get_post_content(self):
         u = TwiUtilsNoLogin()
         url = 'https://twitter.com/enako_cos/status/1174552955409711104'

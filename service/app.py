@@ -79,6 +79,7 @@ def query():
             doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
             score = Couch(DATABASE_DATA_AWAIT_FEEDBACK).query({'_id': doc_id})
         except Exception as e:
+            logger.error(e)
             return make_response({'error': True, 'error_message': str(e)})
     doc = score[0]
     doc_id = doc['_id']
