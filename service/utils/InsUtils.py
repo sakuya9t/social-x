@@ -115,6 +115,12 @@ class InsUtils(AbstractParser):
 
     @staticmethod
     def __is_ip_banned_by_insta(resp):
+        """
+        See if the request is redirected to the login page when trying to parse user homepage without login.
+        If redirected, the ip address is banned by Instagram.
+        :param resp: response, Response we get from user home page
+        :return: boolean, whether our server is banned.
+        """
         return 'login' in resp.url
 
 
