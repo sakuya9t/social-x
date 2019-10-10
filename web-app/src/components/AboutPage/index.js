@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import ResetButton from '../ResetButton';
 
 class AboutPage extends Component{
     constructor(props){
@@ -24,6 +25,7 @@ class AboutPage extends Component{
         return <>
             <button onClick={this.testClick}>abc</button>
             {this.state.abc}
+            <ResetButton />
         </>
     }
 }

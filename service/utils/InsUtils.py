@@ -28,16 +28,14 @@ class InsUtils(AbstractParser):
         self.browser.set_window_size(1920, 1080)
         self.browser.get("https://www.instagram.com/")
 
-    def is_invalid(self, username):
-        url = "https://www.instagram.com/" + username
-        response = self.get_url(url)
+    @staticmethod
+    def __is_invalid(response):
         soup = BeautifulSoup(response.text)
         target_ele = soup.find_all('meta', {'property': 'og:title'})
         return len(target_ele) == 0
 
-    def is_private_or_protected(self, username):
-        url = "https://www.instagram.com/" + username
-        response = self.get_url(url)
+    @staticmethod
+    def __is_private_or_protected(response):
         soup = BeautifulSoup(response.text)
         major_script = list(filter(lambda x: 'window._sharedData = ' in x.text, soup.find_all('script')))[0].text
         major_script = json.loads(re.findall(r'{\".*}', major_script)[0])
@@ -47,12 +45,14 @@ class InsUtils(AbstractParser):
         return is_private or is_empty
 
     def parse_profile(self, username):
-        if is_ip_banned_by_insta():
-            raise InstagramIPForbiddenException('Server IP Is banned by Instagram.')
-        if self.is_invalid(username):
-            raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
-
+        is_private = False
         response = requests.get('https://www.instagram.com/{}/'.format(username), allow_redirects=False)
+        if self.__is_ip_banned_by_insta(response):
+            raise InstagramIPForbiddenException('Server IP Is banned by Instagram.')
+        if self.__is_invalid(response):
+            raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
+        if self.__is_private_or_protected(response):
+            is_private = True
         soup = BeautifulSoup(response.text)
         major_script = list(filter(lambda x: 'window._sharedData = ' in x.text, soup.find_all('script')))[0].text
         major_script = json.loads(re.findall(r'{\".*}', major_script)[0])
@@ -64,7 +64,10 @@ class InsUtils(AbstractParser):
         profile_url = major_script['entry_data']['ProfilePage'][0]['graphql']['user']['external_url']
         if profile_url:
             desc_str += profile_url
-        return {"username": username, "name": screen_name, "description": desc_str, "image": profile_img}
+        profile_res = {"username": username, "name": screen_name, "description": desc_str, "image": profile_img}
+        if is_private:
+            profile_res['status'] = 'PRIVATE'
+        return profile_res
 
     def parse_posts(self, username):
         self.browser.get("https://www.instagram.com/" + username + "/")
@@ -110,16 +113,22 @@ class InsUtils(AbstractParser):
             post_text = matches[0]
         return {"text": post_text, "image": image_url}
 
+    @staticmethod
+    def __is_ip_banned_by_insta(resp):
+        """
+        See if the request is redirected to the login page when trying to parse user homepage without login.
+        If redirected, the ip address is banned by Instagram.
+        :param resp: response, Response we get from user home page
+        :return: boolean, whether our server is banned.
+        """
+        return 'login' in resp.url
+
 
 class InsUtilsNoLogin(InsUtils):
     def parse(self, username):
-        if is_ip_banned_by_insta():
-            raise InstagramIPForbiddenException('Server IP Is banned by Instagram.')
-        if self.is_invalid(username):
-            raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
         profile = self.parse_profile(username)
         logger.info("Parse Instagram profile {} succeed.".format(username))
-        if self.is_private_or_protected(username):
+        if 'status' in profile.keys() and profile['status'] == 'PRIVATE':
             return {"profile": profile, "posts_content": []}
         posts_urls = self.parse_posts(username)
         logger.info(
@@ -167,7 +176,7 @@ class InsUtilsWithLogin(InsUtils):
         for name in names:
             follow_list.add(name.get_attribute("innerText"))
         close_button = \
-        self.browser.find_element_by_css_selector("[role=\"dialog\"]").find_elements_by_tag_name("button")[0]
+            self.browser.find_element_by_css_selector("[role=\"dialog\"]").find_elements_by_tag_name("button")[0]
         close_button.click()
         return list(follow_list)
 
@@ -185,12 +194,8 @@ class InsUtilsWithLogin(InsUtils):
         return int(i)
 
     def parse(self, username):
-        if self.is_invalid(username):
-            raise InvalidAccountException('Invalid Instagram Account {}'.format(username))
         profile = self.parse_profile(username)
         logger.info("Parse Instagram profile {} succeed.".format(username))
-        if self.is_private_or_protected(username):
-            return {"profile": profile, "posts_content": []}
         following = self.parse_network(username)
         logger.info(
             "Parse Instagram account {} following succeed, ".format(username) + str(len(following)) + " followings.")
@@ -213,13 +218,6 @@ def is_valid_instagram_data(content):
     if 'posts_content' not in content.keys():
         return 'profile' in content.keys() and 'status' in content['profile'].keys()
     return True
-
-
-def is_ip_banned_by_insta():
-    indicator_accounts = ['michaelronda', 'timl1302', 'unimelb', 'ucberkeleyofficial', 'enakorin']
-    indicator = random.choice(indicator_accounts)
-    resp = requests.get('https://www.instagram.com/{}'.format(indicator))
-    return 'login' in resp.url
 
 
 class InstagramIPForbiddenException(Exception):
