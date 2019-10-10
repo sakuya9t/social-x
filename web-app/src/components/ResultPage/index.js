@@ -5,6 +5,7 @@ import ErrorPage from '../ErrorPage';
 import ScoreDisplay from '../ScoreDisplay';
 import ScoreBar from '../ScoreBar';
 import Feedback from '../Feedback';
+import ResetButton from '../ResetButton';
 const _ = require('underscore');
 
 
@@ -89,6 +90,7 @@ class ResultPage extends  Component{
                         <ul className='resultpage-detaillist-container'>{this.displayRows(columns, vector)}</ul>
                         <div className='reaultpage-indicator'>We believe two accounts are {score >= 0.5 ? null : "not"} belonged to one user.</div>
                         <Feedback doc_id={doc_id} prediction={score >= 0.5 ? 1 : 0}/>
+                        <ResetButton />
                     </div>
                 );
             }
