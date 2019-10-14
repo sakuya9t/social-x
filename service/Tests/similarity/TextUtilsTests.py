@@ -875,6 +875,14 @@ class TextUtilsTests(unittest.TestCase):
         u.close()
         self.assertTrue(0 <= sim <= 1)
 
+    def test_tensor_similarity_with_emoji(self):
+        text1 = " just gave this young man HELL 😩😭🔥😆 #RoastingSiri 🤳🏾"
+        text2 = "Make your picks before the #Elite8 begins! Follow along to get your hands on some sweet deals. 👇 click to pick!"
+        u = TensorSimilarity()
+        sim = u.similarity(text1, text2)
+        u.close()
+        self.assertTrue(0 <= sim <= 1)
+
 
 if __name__ == '__main__':
     unittest.main()
