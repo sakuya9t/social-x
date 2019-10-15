@@ -1,7 +1,7 @@
 .resetbtn-container{
     position: absolute;
-    right: 80px;
-    bottom: 80px;
+    right: 60px;
+    bottom: 60px;
     width: fit-content;
     border-radius: 50%;
     box-shadow: 0 0 5px 0 #aaa;
