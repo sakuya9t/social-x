@@ -9,7 +9,7 @@ from PIL import Image
 from google.cloud import vision
 from sklearn.metrics.pairwise import cosine_similarity
 
-from similarity.img_to_vec import Img2Vec
+from similarity.img_to_vec import Img2Vec, img_to_base64
 from similarity.Config import Config
 from constant import CONFIG_PATH
 import subprocess
@@ -68,6 +68,12 @@ def load_image(url):
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
     return img
+
+
+def image_url_to_base64(url):
+    img = load_image(url)
+    code = img_to_base64(img)
+    return code
 
 
 def webimage_similarity(url1, url2):

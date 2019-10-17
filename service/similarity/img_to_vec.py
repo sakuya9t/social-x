@@ -1,6 +1,9 @@
 import torch
 import torchvision.models as models
 import torchvision.transforms as transforms
+import base64
+import numpy as np
+import ast
 
 
 class Img2Vec():
@@ -83,3 +86,19 @@ class Img2Vec():
 
         else:
             raise KeyError('Model %s was not found' % model_name)
+
+
+def img_to_base64(img):
+    vector = Img2Vec().get_vec(img)
+    return vec_to_base64(vector)
+
+
+def vec_to_base64(vector):
+    vec = str(list(vector))
+    code = base64.b64encode(vec.encode('utf-8'))
+    return code
+
+
+def base64_to_vec(code):
+    arr = ast.literal_eval(base64.b64decode(code).decode('utf-8'))
+    return np.array(arr)
