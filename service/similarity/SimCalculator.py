@@ -113,7 +113,7 @@ class SimCalculator:
 
 
 def profile_img_sim(url1, url2):
-    return webimage_similarity(url1, url2)['resnet18'].item()
+    return webimage_similarity(url1, url2).item()
 
 
 def writing_style_sim(posts1, posts2):
