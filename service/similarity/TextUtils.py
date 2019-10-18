@@ -175,6 +175,7 @@ def extract_urls(text):
     :param text: string formatted text possibly have urls inside.
     :return: A list of urls found in text. If no urls found, return empty array.
     """
+    text = re.sub(r'[”“’]', ' ', text)
     return [re.sub(r'https?//', '', x.lower()) for x in URLExtract().find_urls(text)]
 
 
