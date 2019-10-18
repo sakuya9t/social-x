@@ -90,6 +90,15 @@ def query():
                           'error': False})
 
 
+@app.route('/info', methods=["GET"])
+def userinfo():
+    username = request.args.get('username').lower()
+    platform = request.args.get('platform').lower()
+    print(username)
+    print(platform)
+    return make_response({'result': 'ok'})
+
+
 @app.route('/feedback', methods=["POST"])
 def feedback():
     """
