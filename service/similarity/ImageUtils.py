@@ -67,6 +67,7 @@ class GoogleVisionUtils:
 def load_image(url):
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
+    img = img.convert('RGB')
     return img
 
 
