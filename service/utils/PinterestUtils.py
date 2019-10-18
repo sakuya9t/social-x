@@ -3,6 +3,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 from bs4 import BeautifulSoup
 
+from utils import logger
 from utils.AbstractParser import AbstractParser
 
 base_pin_url = 'https://www.pinterest.com/pin/'
@@ -30,6 +31,7 @@ def get_pin_annotation_parallel(pins):
 
 
 def parse_pinterest(username, profile_only=False):
+    logger.info("Start parse Pinterest user {}.".format(username))
     url = "https://www.pinterest.com/{}".format(username)
     resp = PinterestUtils().get_url(url)
     data = resp.text
@@ -49,6 +51,8 @@ def parse_pinterest(username, profile_only=False):
         pins = info['pins']
         pin_list = parse_pins(pins)
         user_data = {'profile': info['profile'], 'posts_content': pin_list, 'boards': boards}
+
+    logger.info("Start parse Pinterest user {} succeed.".format(username))
     return user_data
 
 
@@ -62,7 +66,8 @@ def parse_pins(pins):
     for i in range(len(pin_list)):
         pin_list[i]['labels'] += additional_labels[i]
         pin_list[i]['labels'] = list(dict.fromkeys(pin_list[i]['labels']))
-    return pin_list
+    posts = [{'image': x['image'], 'text': ' '.join(x['labels'])} for x in pin_list]
+    return posts
 
 
 class PinterestUtils(AbstractParser):
