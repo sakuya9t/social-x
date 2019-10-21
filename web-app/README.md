@@ -1,4 +1,16 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Social-X FrontEnd Side
+
+This project is the
+
+## Initialize
+
+At the first time running this project, need to run 
+``npm install`` in the project directory.
+
+## Prerequisite in Dev Environment
+> Nodejs 8.16.1
+
+> npm 6.4.1
 
 ## Available Scripts
 
@@ -11,6 +23,9 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 The page will reload if you make edits.<br>
 You will also see any lint errors in the console.
+
+If require this project run at a binded ipaddress, should run (e.g. if want to bind to ip 0.0.0.0):
+``HOST=0.0.0.0 react-scripts start``
 
 ### `npm test`
 
@@ -37,7 +52,12 @@ Instead, it will copy all the configuration files and the transitive dependencie
 
 You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
-## Learn More
+## Config.json
+### server_ip
+The ip address which runs the backend application.
+
+
+## Learn More About React
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
