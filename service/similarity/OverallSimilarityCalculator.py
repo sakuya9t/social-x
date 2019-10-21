@@ -20,7 +20,7 @@ class OverallSimilarityCalculator:
         test_set.pop('label')
         normed_test_data = norm(test_set, train_stats)
         test_predictions = model.predict(normed_test_data).flatten()
-        return test_predictions[0]
+        return _limit_range(test_predictions[0], lower=0, upper=1)
 
     def calc(self, data):
         if has_full_property(data):
@@ -31,3 +31,7 @@ class OverallSimilarityCalculator:
 def has_full_property(data):
     vector = data['vector']
     return 'post_text' in vector.keys()
+
+
+def _limit_range(value, lower, upper):
+    return max(lower, min(upper, value))
