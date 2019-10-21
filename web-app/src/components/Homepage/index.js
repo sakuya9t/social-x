@@ -7,6 +7,7 @@ import { Button } from 'react-bootstrap';
 import ReactCanvasNest from 'react-canvas-nest';
 import {animateScroll} from 'react-scroll';
 import HeaderImg from '../../resources/header.png';
+import {server_ip} from '../../config';
 
 class Homepage extends Component{
     constructor(props){
@@ -66,7 +67,7 @@ class Homepage extends Component{
             waitingResult: true
         }, () => {
             animateScroll.scrollToBottom();
-            fetch('http://localhost:5000/query', {
+            fetch(`http://${server_ip}:5000/query`, {
                 method: 'POST',
                 body: JSON.stringify(reqdata),
                 headers:{

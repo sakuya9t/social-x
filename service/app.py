@@ -5,7 +5,7 @@ from flask import Flask, request
 from flask_cors import CORS
 
 from automation.batch.batchFeedback import apply_feedback
-from constant import REALTIME_MODE, DATABASE_FEEDBACK, DATABASE_CREDENTIAL, DATABASE_DATA_AWAIT_FEEDBACK
+from constant import REALTIME_MODE, DATABASE_CREDENTIAL, DATABASE_DATA_AWAIT_FEEDBACK
 from similarity.OverallSimilarityCalculator import OverallSimilarityCalculator
 from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
 from utils import logger
@@ -34,7 +34,7 @@ def get_public_key():
 
 @app.route('/login', methods=["POST"])
 def login_account():
-    data = json.loads(request.get_data())
+    data = json.loads(request.get_data().decode('utf-8'))
     platform = data['platform']
     username = data['username']
     password = decrypt(data['password'])
@@ -66,7 +66,7 @@ def query():
         Response format:
             {'result': 0.123, 'doc_id': '5bea4d3efa3646879'}
     """
-    data = json.loads(request.get_data())
+    data = json.loads(request.get_data().decode('utf-8'))
     account1 = data['account1']
     account2 = data['account2']
     score = query_existing_similarity_in_db(account1, account2)
@@ -90,6 +90,15 @@ def query():
                           'error': False})
 
 
+@app.route('/info', methods=["GET"])
+def userinfo():
+    username = request.args.get('username').lower()
+    platform = request.args.get('platform').lower()
+    print(username)
+    print(platform)
+    return make_response({'result': 'ok'})
+
+
 @app.route('/feedback', methods=["POST"])
 def feedback():
     """
@@ -101,7 +110,7 @@ def feedback():
         Response format:
             {'result': 'ok'}
     """
-    data = json.loads(request.get_data())
+    data = json.loads(request.get_data().decode('utf-8'))
     logger.info('Received feedback {}.'.format(data))
     apply_feedback(data)
     return make_response({'result': 'ok'})
@@ -109,7 +118,7 @@ def feedback():
 
 @app.route('/decrypt', methods=["POST"])
 def decrypt_api():
-    data = request.get_data()
+    data = request.get_data().decode('utf-8')
     data = json.loads(data)
     message = data['message']
     return decrypt(message)

@@ -1,31 +1,23 @@
 import React, {Component} from 'react';
-import ResetButton from '../ResetButton';
+import ReactCanvasNest from 'react-canvas-nest';
+import './index.css';
+import HeaderImg from '../../resources/logo.png';
 
 class AboutPage extends Component{
-    constructor(props){
-        super(props);
-        this.state = {
-            abc: "123"
-        }
-    }
-
-    testClick = () => {
-        this.setState({
-            ...this.state,
-            abc: "456"
-        }, () => {
-            setTimeout(() => this.setState({
-                ...this.state,
-                abc: "789"
-            }), 6000);
-        });
-    }
 
     render = () => {
         return <>
-            <button onClick={this.testClick}>abc</button>
-            {this.state.abc}
-            <ResetButton />
+            <ReactCanvasNest style={{position:'fixed', opacity:0.2}}/>
+            <div className="about-container">
+                <p><img src={HeaderImg} alt="logo" width={200} height={200}/></p>
+                <div className="about-text">
+                    <h1>Project social-X</h1>
+                    <p>For the fulfillment of Project:</p>
+                    <h3>Linking Users across Social MediaPlatforms</h3>
+                    <p>the University of Melbourne</p>
+                    <p>November 2019</p>
+                </div>
+            </div>
         </>
     }
 }
