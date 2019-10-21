@@ -1,0 +1,15 @@
+.about-container{
+    width: 50%;
+    height: 50%;
+    margin: 12% auto;
+    text-align: center;
+}
+
+.about-text{
+    margin-top: -35px;
+    color: #6a6a6a;
+}
+
+.about-text p{
+    margin: 0;
+}

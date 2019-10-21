@@ -1,7 +1,7 @@
 import unittest
 
-from constant import BATCH_MODE, REALTIME_MODE
-from similarity.SimCalculator import SimCalculator
+from constant import BATCH_MODE, REALTIME_MODE, DATABASE_DATA_AWAIT_FEEDBACK
+from similarity.SimCalculator import SimCalculator, query_existing_similarity_in_db
 from utils.QueryGenerator import retrieve
 
 
@@ -19,8 +19,8 @@ class SimCalculatorTests(unittest.TestCase):
         info2 = retrieve(account2, BATCH_MODE)
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
-        vector = handler.vectorize(info1, info2, BATCH_MODE)
-        doc_id = handler.store_result(info1, info2, vector)
+        vector = handler.calc(info1, info2, enable_networking=False, mode=BATCH_MODE)
+        doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
         self.assertIsNotNone(doc_id)
 
     def test_generate_vector_realtime(self):
@@ -31,8 +31,8 @@ class SimCalculatorTests(unittest.TestCase):
         info2 = retrieve(account2, REALTIME_MODE)
         info1['platform'] = account1['platform'].lower()
         info2['platform'] = account2['platform'].lower()
-        vector = handler.vectorize(info1, info2, REALTIME_MODE)
-        doc_id = handler.store_result(info1, info2, vector)
+        vector = handler.calc(info1, info2, enable_networking=False, mode=REALTIME_MODE)
+        doc_id = handler.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
         self.assertIsNotNone(doc_id)
 
     def test_post_overall_similarity(self):
@@ -47,3 +47,9 @@ class SimCalculatorTests(unittest.TestCase):
         sim = SimCalculator().max_post_sim(posts1, posts2)
         self.assertTrue(0 <= sim <= 1)
 
+
+    def test_query_database(self):
+        query = {'account1': {'platform': 'twitter', 'account': 'behzatuygur'},
+                 'account2': {'platform': 'instagram', 'account': 'phoenixmegcampbell'}}
+        query_res = query_existing_similarity_in_db(query['account1'], query['account2'])
+        self.assertEqual(1, len(query_res))

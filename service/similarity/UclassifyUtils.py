@@ -18,17 +18,21 @@ from utils import logger
 
 def uclassify_topics(text):
     try:
-        keys = Config(CONFIG_PATH).get('uclassify/apikey')
+        key = Config(CONFIG_PATH).get('uclassify/apikey')
         url = 'https://api.uclassify.com/v1/uClassify/Topics/classify'
         data = {'texts': [text]}
-        for key in keys:
-            header = {'Authorization': 'Token {}'.format(key), 'Content-Type': 'application/json'}
-            response = requests.post(url=url, data=json.dumps(data), headers=header)
-            if response.status_code == 200:
-                resp_data = ast.literal_eval(response.text)[0]['classification']
-                res = {x['className']: x['p'] for x in resp_data}
-                return res
-        raise UclassifyKeyExceedException('All uClassify keys daily usage exceed.')
+        header = {'Authorization': 'Token {}'.format(key), 'Content-Type': 'application/json'}
+        response = requests.post(url=url, data=json.dumps(data), headers=header)
+        if response.status_code == 200:
+            resp_data = ast.literal_eval(response.text)[0]['classification']
+            res = {x['className']: x['p'] for x in resp_data}
+            return res
+        else:
+            keygen = UclassifyKeyGenerator()
+            new_key = keygen.get_key()
+            keygen.close()
+            Config(CONFIG_PATH).set('uclassify/apikey', new_key)
+            return uclassify_topics(text)
     except Exception as ex:
         logger.error('Error when uClassifying text: {}'.format(ex))
 
@@ -42,10 +46,6 @@ def uclassify_similarity(text1, text2):
     return cosine_similarity([vec1], [vec2])[0][0]
 
 
-class UclassifyKeyExceedException(BaseException):
-    pass
-
-
 class UclassifyKeyGenerator:
     def __init__(self):
         chrome_options = Options()
@@ -57,6 +57,7 @@ class UclassifyKeyGenerator:
         self.browser.set_script_timeout(1800)
 
     def get_key(self):
+        logger.info('Generating a new uClassify key.')
         register_url = 'https://www.uclassify.com/account/register'
         self.browser.get(register_url)
         time.sleep(3)
@@ -76,7 +77,9 @@ class UclassifyKeyGenerator:
         api_key_url = 'https://www.uclassify.com/manage/apikeys'
         self.browser.get(api_key_url)
         read_key_box = self.browser.find_element_by_class_name('well')
-        return read_key_box.text
+        key_result = read_key_box.text
+        logger.info('Generated uClassify key: {}'.format(key_result))
+        return key_result
 
     def close(self):
         browser_pid = self.browser.service.process.pid
@@ -86,7 +89,7 @@ class UclassifyKeyGenerator:
         self.browser.quit()
         for pid in pids:
             try:
-                os.system('kill -9 {}'.format(pid))
+                os.system('kill -9 {} > /dev/null 2>&1'.format(pid))
             except psutil.NoSuchProcess:
                 continue
 

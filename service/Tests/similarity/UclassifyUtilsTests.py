@@ -1,7 +1,5 @@
 import unittest
-from collections import Counter
 
-from similarity.TextUtils import jaccard_counter_similarity, singleword_similarity, desc_overlap_url
 from similarity.UclassifyUtils import uclassify_topics, uclassify_similarity, generate_uclassify_key
 
 

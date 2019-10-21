@@ -9,7 +9,7 @@ from PIL import Image
 from google.cloud import vision
 from sklearn.metrics.pairwise import cosine_similarity
 
-from similarity.img_to_vec import Img2Vec
+from similarity.img_to_vec import Img2Vec, img_to_base64, base64_to_vec
 from similarity.Config import Config
 from constant import CONFIG_PATH
 import subprocess
@@ -67,24 +67,31 @@ class GoogleVisionUtils:
 def load_image(url):
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
+    img = img.convert('RGB')
     return img
+
+
+def image_url_to_base64(url):
+    img = load_image(url)
+    code = img_to_base64(img)
+    return code
+
+
+def base64_image_similarity(code1, code2):
+    vec1 = base64_to_vec(code1)
+    vec2 = base64_to_vec(code2)
+    return cosine_similarity(vec1.reshape(1, -1), vec2.reshape(1, -1))[0][0]
 
 
 def webimage_similarity(url1, url2):
     img1 = load_image(url1)
     img2 = load_image(url2)
-    
-    img2vec = Img2Vec(model='alexnet')
-    vec1 = img2vec.get_vec(img1)
-    img2vec = Img2Vec(model='alexnet')
-    vec2 = img2vec.get_vec(img2)
-    res = {'alexnet': cosine_similarity(vec1.reshape(1, -1), vec2.reshape(1, -1))[0][0]}
-    
+
     img2vec = Img2Vec()
     vec1 = img2vec.get_vec(img1)
     img2vec = Img2Vec()
     vec2 = img2vec.get_vec(img2)
-    res['resnet18'] = cosine_similarity(vec1.reshape(1, -1), vec2.reshape(1, -1))[0][0]
+    res = cosine_similarity(vec1.reshape(1, -1), vec2.reshape(1, -1))[0][0]
     return res
 
 

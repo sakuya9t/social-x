@@ -18,7 +18,7 @@ def generate_query(account):
         return {"database": db_name, "selector": query}
 
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 def execute_query(query):
@@ -31,7 +31,7 @@ def execute_query(query):
         return res
 
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 def retrieve(account, mode):
@@ -70,8 +70,8 @@ def parse_and_insert(account, mode):
     platform = account['platform'].lower()
     username = account['account']
     parser = factory(platform)
-    parse_result = parser.parse(username) if mode == BATCH_MODE else {'profile': parser.parse_profile(username), 'posts_content': []}
-    logger.info(parse_result)
+    parse_result = parser.parse(username) if mode == BATCH_MODE else {'profile': parser.parse_profile(username)}
+    logger.info('Parsed account {} in {} mode'.format(account, 'batch' if mode == BATCH_MODE else 'real time'))
     parser.close()
     db = Couch(db_name=platform)
     db.insert(parse_result)

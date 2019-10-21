@@ -1,0 +1,43 @@
+{
+  "logger": {
+    "color-enabled": true,
+    "write-to-file": false,
+    "logfile-path": "/data/log/server-x.log"
+  },
+  "microsoft": {
+    "subscription_key": ""
+  },
+  "google": {
+    "keyfile_path": ""
+  },
+  "couchdb": {
+    "server_addr": "",
+    "username": "",
+    "password": ""
+  },
+  "mrisa": {
+    "server-path": "",
+    "port": 0
+  },
+  "instagram": {
+    "accounts": [
+      {
+        "username": "",
+        "password": ""
+      },
+      {
+        "username": "",
+        "password": ""
+      }
+    ]
+  },
+  "uclassify": {
+    "apikey": "aaabbb"
+  },
+  "sampler": {
+    "mode": "",
+    "pairing_file": "",
+    "instagram_folder": "",
+    "twitter_folder": ""
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "nectar": {
+    "access_key_id": "",
+    "access_key_secret": "",
+    "instance_type": "",
+    "keypair_name": "",
+    "image_name": "NeCTAR Ubuntu 18.04 LTS (Bionic) amd64",
+    "security_groups": ["default"],
+    "zone": ""
+  }
+}

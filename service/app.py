@@ -1,16 +1,19 @@
+import json
+
+import flask
 from flask import Flask, request
 from flask_cors import CORS
-import flask
 
-from similarity.SimCalculator import SimCalculator
+from automation.batch.batchFeedback import apply_feedback
+from constant import REALTIME_MODE, DATABASE_CREDENTIAL, DATABASE_DATA_AWAIT_FEEDBACK, BATCH_MODE
+from similarity.OverallSimilarityCalculator import OverallSimilarityCalculator
+from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
+from utils import logger
 from utils.Couch import Couch
 from utils.Decryptor import decrypt
 from utils.InsUtils import InsUtilsWithLogin
-import json
-
 from utils.QueryGenerator import retrieve
 from utils.TwiUtils import TwiUtilsWithLogin
-from constant import REALTIME_MODE, DATABASE_QUERY_RESULT, DATABASE_FEEDBACK, DATABASE_CREDENTIAL
 
 app = Flask(__name__)
 CORS(app)
@@ -31,7 +34,7 @@ def get_public_key():
 
 @app.route('/login', methods=["POST"])
 def login_account():
-    data = json.loads(request.get_data())
+    data = json.loads(request.get_data().decode('utf-8'))
     platform = data['platform']
     username = data['username']
     password = decrypt(data['password'])
@@ -63,20 +66,51 @@ def query():
         Response format:
             {'result': 0.123, 'doc_id': '5bea4d3efa3646879'}
     """
-    data = json.loads(request.get_data())
+    data = json.loads(request.get_data().decode('utf-8'))
     account1 = data['account1']
     account2 = data['account2']
-    score = algoModule.find_existing(account1, account2)
+    score = query_existing_similarity_in_db(account1, account2)
     if len(score) == 0:
-        info1 = retrieve(account1, mode=REALTIME_MODE)
-        info2 = retrieve(account2, mode=REALTIME_MODE)
-        score = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
-                            mode=REALTIME_MODE)
-        db = Couch(DATABASE_QUERY_RESULT)
-        db.insert({'query': data, 'result': score})
-        db.close()
+        try:
+            info1 = retrieve(account1, mode=REALTIME_MODE)
+            info2 = retrieve(account2, mode=REALTIME_MODE)
+            vector = algoModule.calc(info1, info2, enable_networking=(account1['platform'] == account2['platform']),
+                                     mode=REALTIME_MODE)
+            doc_id = algoModule.store_result(info1, info2, vector, DATABASE_DATA_AWAIT_FEEDBACK)
+            score = Couch(DATABASE_DATA_AWAIT_FEEDBACK).query({'_id': doc_id})
+        except Exception as e:
+            logger.error(e)
+            return make_response({'error': True, 'error_message': str(e)})
+    doc = score[0]
+    doc_id = doc['_id']
+    vector = doc['vector']
+    overall_score = OverallSimilarityCalculator().calc(doc)
+    return make_response({'result': vector, 'columns': column_names,
+                          'score': str(overall_score), 'doc_id': doc_id,
+                          'error': False})
 
-    return make_response({'result': score, 'doc_id': doc_id})
+
+@app.route('/info', methods=["GET"])
+def userinfo():
+    """
+    Request format:
+        {'platform':'xxx', 'username': 'aaa'}
+    :return: detailed information of the given user. Will take some time if the user is not in the database.
+             returns error message if an error occurs.
+    """
+    username = request.args.get('username').lower()
+    platform = request.args.get('platform').lower()
+    account = {'platform': platform, 'account': username}
+    logger.info('Querying user {} from {}.'.format(username, platform))
+    try:
+        account_info = retrieve(account, mode=BATCH_MODE)
+        del account_info['_id']
+        del account_info['_rev']
+        del account_info['timestamp']
+    except Exception as e:
+        logger.error(e)
+        return make_response({'error': True, 'error_message': str(e)})
+    return make_response(account_info)
 
 
 @app.route('/feedback', methods=["POST"])
@@ -84,19 +118,21 @@ def feedback():
     """
         Request format:
             {'doc_id': '5bea4d3efa3646879', 'feedback': 0}
+            feedback: actual label.
+                0: not same user
+                1: same user
         Response format:
             {'result': 'ok'}
     """
-    data = json.loads(request.get_data())
-    db = Couch(DATABASE_FEEDBACK)
-    db.insert(data)
-    db.close()
+    data = json.loads(request.get_data().decode('utf-8'))
+    logger.info('Received feedback {}.'.format(data))
+    apply_feedback(data)
     return make_response({'result': 'ok'})
 
 
 @app.route('/decrypt', methods=["POST"])
 def decrypt_api():
-    data = request.get_data()
+    data = request.get_data().decode('utf-8')
     data = json.loads(data)
     message = data['message']
     return decrypt(message)

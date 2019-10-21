@@ -8,11 +8,32 @@
     margin: 0 auto 10vh;
 }
 
+.reaultpage-indicator{
+    margin-bottom: -25px;
+    font-family: Arial;
+    font-size: 24px;
+}
+
+.reaultpage-overall-container{
+    margin: 0 auto;
+    width: fit-content;
+}
+
 .resultpage-textcenter{
     text-align: center;
 }
 
 .resultpage-container{
     height: 100vh;
-    padding: 30vh 0;
+    width: fit-content;
+    margin: 10px auto;
+    padding: 18vh 0;
+}
+
+.resultpage-detaillist-container{
+    width: 800px;
+    padding-top: 15px;
+    padding-left: 0;
+    padding-bottom: 24px;
+    list-style-type: none;
 }

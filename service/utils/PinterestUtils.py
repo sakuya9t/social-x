@@ -1,8 +1,9 @@
-from bs4 import BeautifulSoup
-import requests
-from multiprocessing.dummy import Pool as ThreadPool
 import json
+from multiprocessing.dummy import Pool as ThreadPool
 
+from bs4 import BeautifulSoup
+
+from utils import logger
 from utils.AbstractParser import AbstractParser
 
 base_pin_url = 'https://www.pinterest.com/pin/'
@@ -12,7 +13,7 @@ THREAD_POOL_SIZE = 20
 def get_pin_annotation(pin):
     try:
         url = pin['url']
-        resp = requests.get(url)
+        resp = PinterestUtils().get_url(url)
         data = resp.text
         soup = BeautifulSoup(data)
         info = json.loads(soup.find("script", {"id": "initial-state"}).get_text())
@@ -30,8 +31,9 @@ def get_pin_annotation_parallel(pins):
 
 
 def parse_pinterest(username, profile_only=False):
+    logger.info("Start parse Pinterest user {}.".format(username))
     url = "https://www.pinterest.com/{}".format(username)
-    resp = requests.get(url)
+    resp = PinterestUtils().get_url(url)
     data = resp.text
     soup = BeautifulSoup(data)
 
@@ -40,14 +42,17 @@ def parse_pinterest(username, profile_only=False):
     # rename properties to match other platforms
     info['profile']['image'] = info['profile'].pop('image_xlarge_url')
     info['profile']['description'] = info['profile'].pop('about')
+    info['profile']['name'] = info['profile'].pop('full_name')
     boards = [(x['name'], x['pin_count']) for x in info['boards']]
 
     if profile_only:
+        user_data = info['profile']
+    else:
         pins = info['pins']
         pin_list = parse_pins(pins)
         user_data = {'profile': info['profile'], 'posts_content': pin_list, 'boards': boards}
-    else:
-        user_data = info['profile']
+
+    logger.info("Start parse Pinterest user {} succeed.".format(username))
     return user_data
 
 
@@ -61,7 +66,8 @@ def parse_pins(pins):
     for i in range(len(pin_list)):
         pin_list[i]['labels'] += additional_labels[i]
         pin_list[i]['labels'] = list(dict.fromkeys(pin_list[i]['labels']))
-    return pin_list
+    posts = [{'image': x['image'], 'text': ' '.join(x['labels'])} for x in pin_list]
+    return posts
 
 
 class PinterestUtils(AbstractParser):

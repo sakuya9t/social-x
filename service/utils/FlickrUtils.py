@@ -1,13 +1,15 @@
-import selenium
-import time
 import re
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
-from bs4 import BeautifulSoup
+import time
+
 import requests
-from multiprocessing.dummy import Pool as ThreadPool
+import selenium
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.options import Options
+
 from constant import DRIVER_PATH
+from utils import logger
 from utils.AbstractParser import AbstractParser
 
 
@@ -31,7 +33,9 @@ class FlickrUtils(AbstractParser):
     def parse(self, username):
         self.set_user(username)
         profile = self.parse_profile(username)
+        logger.info("Parse Flickr posts {}.".format(username))
         posts = self.multi_thread_parse(callback=self.get_post_content, urls=self.parse_image_urls())
+        logger.info("Parse Flickr posts {} succeed, {} posts.".format(username, len(posts)))
         following = self.get_followings()
         groups = self.get_user_groups()
         return {"profile": profile, "posts_content": posts, "following": following, "groups": groups}
@@ -61,14 +65,14 @@ class FlickrUtils(AbstractParser):
         return image_urls
 
     def get_post_content(self, url):
-        resp = requests.get(url)
+        resp = self.get_url(url)
         data = resp.text
         soup = BeautifulSoup(data)
         image = 'https:' + soup.find("img", {"class": "main-photo"})['src']
         image = image[:-4] + "_b" + ".jpg"
         description = soup.find("meta", {"name":"description"})['content']
         title = soup.find("meta", {"name":"title"})['content']
-        return {'title': title, 'desc': description, 'image': image}
+        return {'text': title + ' ' + description, 'image': image}
 
     def get_followings(self):
         self.browser.get(self.base_url + self.links['following'])
@@ -85,6 +89,7 @@ class FlickrUtils(AbstractParser):
         return following_ids
 
     def parse_profile(self, username):
+        logger.info("Parse Flickr profile {}.".format(username))
         self.set_user(username)
         profile = {'username': username}
         resp = requests.get(self.base_url + self.links['about'])
@@ -93,7 +98,7 @@ class FlickrUtils(AbstractParser):
         image_property = "https:" + re.findall(r'\(.+\?', soup.find("div", {"class": "avatar"})['style'])[0][1:-1]
         profile['image'] = image_property
         screen_name = soup.find("h1", {"class": "truncate"}).get_text().strip()
-        profile['screen_name'] = screen_name
+        profile['name'] = screen_name
         desc_component = soup.find("div", {"class": "description"})
         if desc_component:
             desc_text = desc_component.get_text()

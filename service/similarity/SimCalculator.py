@@ -1,14 +1,26 @@
 import calendar
 import time
 
+from constant import CONFIG_PATH, REALTIME_MODE, ALGOCONFIG_PATH, DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK
 from similarity.Config import Config
 from similarity.ImageUtils import webimage_similarity
 from similarity.TeaUtils import query_writing_style, writing_style_similarity
 from similarity.TextUtils import TensorSimilarity, singleword_similarity, desc_overlap_url
-from constant import CONFIG_PATH, REALTIME_MODE, BATCH_MODE, DATABASE_SIMILARITY_VECTOR, ALGOCONFIG_PATH
 from similarity.UclassifyUtils import uclassify_similarity
 from utils import logger
 from utils.Couch import Couch, _convert_float, _restore_float
+
+column_names = {
+    'score': 'Overall Similarity',
+    'username': 'User Name',
+    'profileImage': 'Profile Image',
+    'self_desc': 'Text in Self Description',
+    'desc_overlap_url_count': 'URL in Self Description',
+    'readability': 'Writing Style (Readability)',
+    'tea': 'Writing Style (Tea)',
+    'post_text': 'Text in Posts',
+    'uclassify': 'UClassify Similarity'
+}
 
 
 class SimCalculator:
@@ -17,8 +29,9 @@ class SimCalculator:
         self.semantic_sim = TensorSimilarity()
 
     @staticmethod
-    def store_result(info1, info2, vector):
-        database = Couch(DATABASE_SIMILARITY_VECTOR)
+    # store result will run right after calc function.
+    def store_result(info1, info2, vector, database):
+        database = Couch(database)
         doc = {'platform1': info1['platform'], 'platform2': info2['platform'],
                'username1': info1['profile']['username'], 'username2': info2['profile']['username'],
                'vector': vector}
@@ -28,26 +41,25 @@ class SimCalculator:
         return doc_id
 
     @staticmethod
-    def fetch_vector(info1, info2):
+    def fetch_vector(info1, info2, database):
         selector = {'platform1': info1['platform'], 'platform2': info2['platform'],
                     'username1': info1['profile']['username'], 'username2': info2['profile']['username']}
-        database = Couch(DATABASE_SIMILARITY_VECTOR)
+        database = Couch(database)
         query_res = database.query_latest_change(selector)
         return [_restore_float(x) for x in query_res]
 
     def calc(self, info1, info2, enable_networking, mode):
         if mode == REALTIME_MODE:
-            existing_value = self.fetch_vector(info1, info2)
+            existing_value = query_existing_similarity_in_db(_info_to_query(info1), _info_to_query(info2))
             if len(existing_value) > 0:
                 logger.info('Similarity score already exist, return in REAL TIME MODE....')
                 return existing_value[0]
-        vector = self.vectorize(info1, info2, mode)
-        vector['timestamp'] = calendar.timegm(time.gmtime())
+        vector = self.__vectorize(info1, info2, mode)
         if enable_networking:
             vector['network'] = network_sim(info1, info2)
         return vector
 
-    def vectorize(self, info1, info2, mode):
+    def __vectorize(self, info1, info2, mode):
         # todo: handle modes.
         result = {}
         profile1, profile2 = info1['profile'], info2['profile']
@@ -75,7 +87,8 @@ class SimCalculator:
         logger.info('Evaluating post similarity...')
 
         max_post_enabled = bool(Config(ALGOCONFIG_PATH).get('max-post-similarity-enabled'))
-        result['post_text'] = self.max_post_sim(posts1, posts2) if max_post_enabled else self.overall_post_sim(posts1, posts2)
+        result['post_text'] = self.max_post_sim(posts1, posts2) if max_post_enabled else self.overall_post_sim(posts1,
+                                                                                                               posts2)
 
         logger.info('Evaluating uClassify topical similarity...')
         result['uclassify'] = uclassify_similarity(" ".join(_get_post_text(posts1)), " ".join(_get_post_text(posts2)))
@@ -100,7 +113,7 @@ class SimCalculator:
 
 
 def profile_img_sim(url1, url2):
-    return webimage_similarity(url1, url2)['resnet18'].item()
+    return webimage_similarity(url1, url2).item()
 
 
 def writing_style_sim(posts1, posts2):
@@ -120,3 +133,33 @@ def _get_post_text(posts):
         posts = [x['text'] for x in posts]
     return posts
 
+
+def _info_to_query(info):
+    return {'platform': info['platform'], 'account': info['profile']['username']}
+
+
+def query_existing_similarity_in_db(account1, account2):
+    database_order = [DATABASE_LABELED_DATA, DATABASE_DATA_AWAIT_FEEDBACK]
+    account1 = __format_account_query(account1)
+    account2 = __format_account_query(account2)
+    selectors = [{'platform1': account1['platform'], 'platform2': account2['platform'],
+                  'username1': account1['account'], 'username2': account2['account']},
+                 {'platform1': account2['platform'], 'platform2': account1['platform'],
+                  'username1': account2['account'], 'username2': account1['account']}]
+    for db_name in database_order:
+        for selector in selectors:
+            database = Couch(db_name)
+            query_res = database.query_latest_change(selector)
+            if len(query_res) > 0:
+                return [_restore_float(x) for x in query_res]
+    return []
+
+
+def __format_account_query(query):
+    platform = query['platform']
+    username = query['account']
+    if platform.lower() == 'twitter':
+        if username[0] != '@':
+            username = '@' + username
+        query['account'] = username
+    return query

@@ -1,0 +1,15 @@
+.resetbtn-container{
+    position: absolute;
+    right: 60px;
+    bottom: 60px;
+    width: fit-content;
+    border-radius: 50%;
+    box-shadow: 0 0 5px 0 #aaa;
+    transition-duration: 0.3s;
+}
+
+.resetbtn-container:hover{
+    transform: scale(1.2) rotate(900deg);
+    transition-duration: 0.3s;
+    box-shadow: 0 0 7px 0 #777;
+}

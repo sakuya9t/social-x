@@ -7,6 +7,7 @@ import { Button } from 'react-bootstrap';
 import ReactCanvasNest from 'react-canvas-nest';
 import {animateScroll} from 'react-scroll';
 import HeaderImg from '../../resources/header.png';
+import {server_ip} from '../../config';
 
 class Homepage extends Component{
     constructor(props){
@@ -50,40 +51,49 @@ class Homepage extends Component{
 
     sendRequest = () => {
         const {account1, account2} = this.state;
-        const data = {
+        const reqdata = {
             account1: {
-                platform: account1.platformName,
+                platform: account1.platformName.toLowerCase(),
                 account: account1.text
             }, 
             account2: {
-                platform: account2.platformName,
+                platform: account2.platformName.toLowerCase(),
                 account: account2.text
             }};
 
-        // fetch('http://localhost:5000/query', {
-        //     method: 'POST',
-        //     body: JSON.stringify(data),
-        //     headers:{
-        //         'Content-Type': 'application/json',
-        //     }
-        // }).then(res => res.text())
-        // .then(res => console.log(res));
-
-        // test data for ui
-        let resdata = {
-            doc_id: '5bea4d3efa3646879',
-            result: 1.0
-        };
-        // test data for ui end
-
         this.setState({
             ...this.state,
-            result: resdata.result,
             showResult: true,
-            resultId: resdata.doc_id
+            waitingResult: true
+        }, () => {
+            animateScroll.scrollToBottom();
+            fetch(`http://${server_ip}:5000/query`, {
+                method: 'POST',
+                body: JSON.stringify(reqdata),
+                headers:{
+                    'Content-Type': 'application/json',
+                }
+            }).then(res => res.json())
+            .then(resdata => {
+                resdata.score = parseFloat(resdata.score);
+                this.setState({
+                    ...this.state,
+                    waitingResult: false,
+                    result: resdata,
+                    resultId: resdata.doc_id
+                });
+            })
+            .catch(_ => {
+                this.setState({
+                    ...this.state,
+                    waitingResult: false,
+                    result: {
+                        error: true,
+                        error_message: '500 Server Internal Error'
+                    }
+                })
+            });
         });
-
-        animateScroll.scrollToBottom();
     }
 
     submit = () => {
@@ -145,9 +155,8 @@ class Homepage extends Component{
                         <Button className="home-submit-btn" onClick={this.submit}>Calculate</Button>
                     </p>
                 </div>
-
-                {showResult ? <ResultPage waiting={waitingResult} data={JSON.stringify(result)}/> : null}
             </div>
+            {showResult ? <ResultPage waiting={waitingResult} data={JSON.stringify(result)}/> : null}
             {this.LoginPage.apply()}
         </>;
     }

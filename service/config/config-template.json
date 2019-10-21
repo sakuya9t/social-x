@@ -1,4 +1,9 @@
 {
+  "logger": {
+    "color-enabled": true,
+    "write-to-file": false,
+    "logfile-path": "/data/log/server-x.log"
+  },
   "microsoft": {
     "subscription_key": ""
   },
@@ -27,7 +32,7 @@
     ]
   },
   "uclassify": {
-    "apikey": []
+    "apikey": ""
   },
   "sampler": {
     "mode": "",
