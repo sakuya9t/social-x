@@ -5,7 +5,7 @@ from flask import Flask, request
 from flask_cors import CORS
 
 from automation.batch.batchFeedback import apply_feedback
-from constant import REALTIME_MODE, DATABASE_CREDENTIAL, DATABASE_DATA_AWAIT_FEEDBACK
+from constant import REALTIME_MODE, DATABASE_CREDENTIAL, DATABASE_DATA_AWAIT_FEEDBACK, BATCH_MODE
 from similarity.OverallSimilarityCalculator import OverallSimilarityCalculator
 from similarity.SimCalculator import SimCalculator, column_names, query_existing_similarity_in_db
 from utils import logger
@@ -92,11 +92,25 @@ def query():
 
 @app.route('/info', methods=["GET"])
 def userinfo():
+    """
+    Request format:
+        {'platform':'xxx', 'username': 'aaa'}
+    :return: detailed information of the given user. Will take some time if the user is not in the database.
+             returns error message if an error occurs.
+    """
     username = request.args.get('username').lower()
     platform = request.args.get('platform').lower()
-    print(username)
-    print(platform)
-    return make_response({'result': 'ok'})
+    account = {'platform': platform, 'account': username}
+    logger.info('Querying user {} from {}.'.format(username, platform))
+    try:
+        account_info = retrieve(account, mode=BATCH_MODE)
+        del account_info['_id']
+        del account_info['_rev']
+        del account_info['timestamp']
+    except Exception as e:
+        logger.error(e)
+        return make_response({'error': True, 'error_message': str(e)})
+    return make_response(account_info)
 
 
 @app.route('/feedback', methods=["POST"])
