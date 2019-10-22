@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import { faThumbsUp, faThumbsDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import './index.css';
+import {server_ip} from '../../config';
 
 class Feedback extends Component{
     constructor(props){
@@ -17,7 +18,7 @@ class Feedback extends Component{
             doc_id: doc_id,
             feedback: value ? prediction : 1 - prediction  // positive => prediction, negative => opposite of prediction
         };
-        fetch('http://localhost:5000/feedback', {
+        fetch(`http://${server_ip}:5000/feedback`, {
             method: 'POST',
             body: JSON.stringify(reqdata),
             headers:{
