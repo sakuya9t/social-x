@@ -21,8 +21,8 @@ algoModule = SimCalculator()
 
 
 @app.route('/')
-def hello_world():
-    return 'Hello World!'
+def check_alive():
+    return 'Service status: ALIVE'
 
 
 @app.route('/key')

@@ -1,4 +1,4 @@
 #!/bin/bash
-nohup pipenv run python3 service/app.py > backend.log &
+nohup pipenv run python3 service/app.py > ./log/backend.log &
 cd web-app
-nohup npm run start > frontend.log &
+nohup npm run start > ../log/frontend.log &
