@@ -1,3 +1,4 @@
+import {server_ip} from '../config';
 const forge = require('node-forge');
 
 class RSA{
@@ -7,7 +8,7 @@ class RSA{
     }
 
     getKey = async () => {
-        let res = await fetch('http://localhost:5000/key');
+        let res = await fetch(`http://${server_ip}:5000/key`);
         res = await res.json();
         this.key = res.data;
     }
@@ -20,14 +21,6 @@ class RSA{
         });
         const base64 = forge.util.encode64(encrypted);
         return base64;
-        // fetch('http://localhost:5000/decrypt',{
-        //     method: 'POST',
-        //     headers: {
-        //     'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify({message: base64})
-        // }).then(res => res.text())
-        // .then(resp => console.log(resp));
     }
 }
 export default RSA;

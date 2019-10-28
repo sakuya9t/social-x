@@ -5,6 +5,7 @@ import './index.css';
 import CloseImg from '../../resources/close.png';
 import RSA from '../../utils/RSA';
 import LoginValidation from './LoginValidation';
+import {server_ip} from '../../config';
 
 class LoginPage extends Component{
     constructor(props){
@@ -60,7 +61,7 @@ class LoginPage extends Component{
         const password = this.rsa_module.encrypt(form.password.value);
         //const password = form.password.value;
         const data = {'platform': platform, 'username': username, 'password': password}
-        fetch('http://localhost:5000/login', {
+        fetch(`http://${server_ip}:5000/login`, {
             method: 'POST',
             body: JSON.stringify(data),
             headers:{

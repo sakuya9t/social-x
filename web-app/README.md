@@ -1,6 +1,6 @@
 # Social-X FrontEnd Side
 
-This project is the
+This project is the front end part of the social X application. It requires the backend web service running on port 5000.
 
 ## Initialize
 
