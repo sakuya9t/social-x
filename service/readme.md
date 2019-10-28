@@ -21,6 +21,16 @@ or
 ``pipenv run pip3 install -r requirements.txt``
 
 
+## Start the service
+
+If use system python environment:
+
+``python3 app.py``
+
+If use pipenv:
+
+``pipenv run python3 app.py``
+
 ## Troubleshoot
 
 ### python3 version in pipenv is not 3.6.8
