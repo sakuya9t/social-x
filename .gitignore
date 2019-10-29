@@ -31,3 +31,4 @@
 */chromedriver
 */config.json
 *.log
+/chromedriver

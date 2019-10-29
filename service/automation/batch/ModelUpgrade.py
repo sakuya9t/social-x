@@ -11,6 +11,23 @@ from tensorflow import keras
 from constant import REALTIME_MODE, BATCH_MODE, DATABASE_LABELED_DATA, MODEL_FILE_BASE_PATH, ALGOCONFIG_PATH
 from utils.Couch import Couch
 
+"""
+Auto model updating module.
+
+
+Dependency:
+DATABASE_LABELED_DATA database
+
+
+Description:
+This module will update the model file (/model) and will update the model path in the algomodule config file.
+When running, it gets training data from the DATABASE_LABELED_DATA database.
+
+Will generate batch and realtime two models. To turn on/off cross-feature, change the option in algomodule config.
+
+We should run this module once a day to guarantee we are utilizing the latest data.
+"""
+
 EPOCHS = 1000
 FEATURE_COUNT_REALTIME = 3
 FEATURE_COUNT_BATCH = 6
