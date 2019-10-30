@@ -3,6 +3,9 @@
   remote_user: ubuntu
   sudo: yes
   tasks:
+    - set_fact:
+        home_path="/home/ubuntu"
+
     - name: Remove apt lock
       file:
         path: "{{ item }}"
@@ -12,12 +15,14 @@
         - /var/cache/apt/archives/lock
         - /var/lib/dpkg/lock
     - name: Creates directory ~/Downloads
-      file: path=/home/ubuntu/Downloads state=directory
+      file:
+        path: "{{ home_path }}/Downloads"
+        state: directory
 
     - name: Download Chrome
       get_url:
         url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        dest: /home/ubuntu/Downloads/chrome.deb
+        dest: "{{ home_path }}/Downloads/chrome.deb"
 
     - name: apt update
       apt:
@@ -25,7 +30,7 @@
 
     - name: install Chrome
       apt:
-        deb: /home/ubuntu/Downloads/chrome.deb
+        deb: "{{ home_path }}/Downloads/chrome.deb"
 
     - name: fix apt dependency missing for chrome
       shell: apt-get install -fy
@@ -36,7 +41,7 @@
 
     - name: Remove Chrome installer
       file:
-        path: /home/ubuntu/Downloads/chrome.deb
+        path: "{{ home_path }}/Downloads/chrome.deb"
         state: absent
 
     - set_fact:
@@ -45,7 +50,7 @@
     - name: Download ChromeDriver
       get_url:
         url: https://chromedriver.storage.googleapis.com/{{ chrome_version }}/chromedriver_linux64.zip
-        dest: /home/ubuntu/Downloads
+        dest: "{{ home_path }}/Downloads"
 
     - name: Install unzip
       apt:
@@ -55,10 +60,10 @@
 
     - name: Unzip ChromeDriver
       unarchive:
-        src: /home/ubuntu/Downloads/chromedriver_linux64.zip
-        dest: /home/ubuntu/Downloads
+        src: "{{ home_path }}/Downloads/chromedriver_linux64.zip"
+        dest: "{{ home_path }}/Dev/social-x/service"
 
-    - name: Remove Chromedriver package
+    - name: Remove Chromedriver zip package
       file:
-        path: /home/ubuntu/Downloads/chromedriver_linux64.zip
+        path: "{{ home_path }}/Downloads/chromedriver_linux64.zip"
         state: absent
