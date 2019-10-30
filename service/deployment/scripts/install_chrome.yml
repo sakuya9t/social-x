@@ -1,0 +1,64 @@
+- name: install google chrome and chrome driver
+  hosts: localhost
+  remote_user: ubuntu
+  sudo: yes
+  tasks:
+    - name: Remove apt lock
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /var/lib/apt/lists/lock
+        - /var/cache/apt/archives/lock
+        - /var/lib/dpkg/lock
+    - name: Creates directory ~/Downloads
+      file: path=/home/ubuntu/Downloads state=directory
+
+    - name: Download Chrome
+      get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /home/ubuntu/Downloads/chrome.deb
+
+    - name: apt update
+      apt:
+        update_cache: yes
+
+    - name: install Chrome
+      apt:
+        deb: /home/ubuntu/Downloads/chrome.deb
+
+    - name: fix apt dependency missing for chrome
+      shell: apt-get install -fy
+
+    - name: get chrome version
+      shell: google-chrome --product-version
+      register: output
+
+    - name: Remove Chrome installer
+      file:
+        path: /home/ubuntu/Downloads/chrome.deb
+        state: absent
+
+    - set_fact:
+        chrome_version="{{ output.stdout }}"
+
+    - name: Download ChromeDriver
+      get_url:
+        url: https://chromedriver.storage.googleapis.com/{{ chrome_version }}/chromedriver_linux64.zip
+        dest: /home/ubuntu/Downloads
+
+    - name: Install unzip
+      apt:
+        name: unzip
+        state: latest
+        update_cache: yes
+
+    - name: Unzip ChromeDriver
+      unarchive:
+        src: /home/ubuntu/Downloads/chromedriver_linux64.zip
+        dest: /home/ubuntu/Downloads
+
+    - name: Remove Chromedriver package
+      file:
+        path: /home/ubuntu/Downloads/chromedriver_linux64.zip
+        state: absent
