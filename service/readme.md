@@ -12,7 +12,12 @@ If using Ubuntu 18.04, then the default python version is 3.6.8
 
 If using Ubuntu 16.04, update the python version following: http://ubuntuhandbook.org/index.php/2017/07/install-python-3-6-1-in-ubuntu-16-04-lts/
 
-To install required libraries, run:
+
+We first need to install packages to meet system requirements. Goto /deployment, run:
+
+``sudo sh setup.sh``
+
+Then go back to the service directory and setup the python virtual env, run:
 
 ``pipenv run python3 -m pip install -r requirements.txt``
 
