@@ -5,6 +5,7 @@ CONFIG_PATH = os.path.join(ROOT_DIR, 'config/config.json')
 DRIVER_PATH = os.path.join(ROOT_DIR, 'chromedriver')
 ALGOCONFIG_PATH = os.path.join(ROOT_DIR, 'config/algomodule.config')
 DEPLOY_CONFIG_PATH = os.path.join(ROOT_DIR, 'config/config-deploy.json')
+ANSIBLE_SCRIPT_PATH = os.path.join(ROOT_DIR, 'deployment/scripts/')
 KEY_FOLDER_PATH = os.path.join(ROOT_DIR, 'resources/')
 REALTIME_MODE = 0
 BATCH_MODE = 1
